@@ -1,5 +1,6 @@
 import pygame, sys
 from MainMenuScreen import *
+from SetupShipsScreen import *
 from pygame.locals import *
 from Assets import *
 
@@ -11,11 +12,13 @@ windowSurface = pygame.display.set_mode((640, 480), 0, 32)
 windowSurface.fill(COLOR_WHITE)
 pygame.display.set_caption('Naval Warfare Simulator')
 
-screen = MainMenuScreen()
-screen.init(windowSurface)
+screen = SetupShipsScreen()
+screen.init(windowSurface, 12)
 
-screen.addServer("127.0.0.1", 7777)
-screen.addServer("Mock server", 1234)
+#screen = MainMenuScreen()
+#screen.init(windowSurface)
+#screen.addServer("127.0.0.1", 7777)
+#screen.addServer("Mock server", 1234)
 
 clock = pygame.time.Clock()
 
@@ -43,10 +46,6 @@ clock = pygame.time.Clock()
 # pixArray = pygame.PixelArray(windowSurface)
 # pixArray[480][380] = BLACK
 # del pixArray
-#
-# # draw the text onto the surface
-# windowSurface.blit(text, textRect)
-
 
 while True:
     #Ensure max 30 fps
