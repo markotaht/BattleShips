@@ -1,6 +1,7 @@
 import pygame
 from Assets import *
 from Util import *
+import re
 
 TILE_EMPTY = 0
 TILE_SHIP = 1
@@ -99,8 +100,7 @@ class Board:
 
     #Coordinates expected to be in form "A4", "C12" etc
     def setTileByGameCoordinates(self, coordinates, value):
-        #TODO: Extract letter and number from the coordinate,
-        #Then use as described below
-        #x = number - 1
-        #y = ord(letter)
-        #self.setTileByIndex(x, y, value)
+        x = int(coordinates[1:]) - 1
+        y = ord(coordinates[0])
+        self.setTileByIndex(x, y, value)
+        return
