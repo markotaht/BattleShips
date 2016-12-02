@@ -94,12 +94,14 @@ class Board:
         self.board[x][y] = (self.board[x][y] + 1) % 4
 
     def setTileByIndex(self, x, y, value):
-        #TODO: Verify that value is legitimate
-        print(str(x) + " " + str(y))
-        self.board[x][y] = value
+        #TODO: What if it's not legitimate?
+        if x >= 0 and y >= 0 and x < self.boardWidth and y < self.boardWidth:
+            print(str(x) + " " + str(y))
+            self.board[x][y] = value
 
     #Coordinates expected to be in form "A4", "C12" etc
     def setTileByGameCoordinates(self, coordinates, value):
+        #fails when there are more than 1 letters ("AA3")
         x = int(coordinates[1:]) - 1
         y = ord(coordinates[0])
         self.setTileByIndex(x, y, value)
