@@ -138,13 +138,12 @@ class BattleShipsClient(object):
         if self.corr_id5 == props.correlation_id:
             self.response5 = body
 
-
     def on_response6(self, ch, method, props, body):
         if self.corr_id6 == props.correlation_id:
             self.response6 = body
 
     def bomb(self, x,y,player):
-        n = str(x)+ ":" + str(y) + ":" + str(player) + ":" + self.username
+        n = str(x)+ ":" + str(y) + ":" + player + ":" + self.username
         self.response2 = None
         self.corr_id2 = str(uuid.uuid4())
         self.bombShipChannel.basic_publish(exchange='',
@@ -159,7 +158,7 @@ class BattleShipsClient(object):
         return self.response2
 
     def placeShip(self,x,y,orientation):
-        n = str(x) + ":" + str(y) + ":" + str(orientation)
+        n = str(x) + ":" + str(y) + ":" + self.username
         self.response = None
         self.corr_id = str(uuid.uuid4())
         self.placeShipChannel.basic_publish(exchange='',
@@ -245,7 +244,7 @@ print(" [x] Requesting place")
 #response = fibonacci_rpc.placeShip(0,0,4)
 #print(" [.] Got %r" % response)
 print(" [x] Requesting bomb")
-#response = fibonacci_rpc.bomb(0,0,1)
+#response = fibonacci_rpc.bomb(0,0,"Test")
 #print(" [.] Got %r" % response)
 print(" [x] Requesting room")
 response = fibonacci_rpc.createRoom("Test")

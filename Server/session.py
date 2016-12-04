@@ -10,8 +10,9 @@ class BattleShipsSession(threading.Thread):
         self.lock = threading.Lock()
         self.updateChannel = None
 
-        #somehow track who has ships
         self.players = []
+        self.fieldSize = (10,10)
+        self.fields = {}
         self.dead = []
         self.state = "INIT"
         self.playerturn = ""
@@ -20,6 +21,7 @@ class BattleShipsSession(threading.Thread):
     def addPlayer(self, name):
         with self.lock:
             self.players.append(name)
+            self.fields[name] = [[0 for i in range(self.fieldSize[1])] for j in range(self.fieldSize[0])]
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                              routing_key='',
                                              body="%s joined the game"%name)
@@ -71,7 +73,6 @@ class BattleShipsSession(threading.Thread):
         self.gameStartChannel.basic_consume(gameStart, queue= self.prefix + 'rpc_start')
         self.gameStartChannel.start_consuming()
 
-
     def finishedPlacingListener(self, finishedPlacing):
         self.finishedPlacingConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         self.finishedPlacingChannel = self.finishedPlacingConnection.channel()
@@ -85,6 +86,25 @@ class BattleShipsSession(threading.Thread):
     def checkHit(self,x,y,player):
         return "MISS"
 
+    def sunk(self,x,y,player):
+        #TODO lisada juurde et kas on laev lõppenud või mitte
+        for i in range(x-1,0,-1):
+            if self.fields[player][y][x] == 1:
+                return False
+
+        for i in range(x+1,self.fieldSize[0]):
+            if self.fields[player][y][x] == 1:
+                return False
+
+        for i in range(y-1,0,-1):
+            if self.fields[player][y][x] == 1:
+                return False
+
+        for i in range(y+1):
+            if self.fields[player][y][x] == 1:
+                return False
+        return True
+
     def bombShip(self, ch, method, props, body):
         x,y,player,attacker = body.slit(":")
 
@@ -97,7 +117,11 @@ class BattleShipsSession(threading.Thread):
                          body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-        message = ":".join(["BOMB",response,player,x,y])
+        #TODO teha paremaks ja lisada juurde laeva edastamine koigile
+        if self.sunk(int(x),int(y),player):
+            message = ":".join(["SUNK",x,y,player])
+        else:
+            message = ":".join(["BOMB",response,player,x,y])
         self.updateChannel.basic_publish(exchange=self.prefix+'updates',
                                          routing_key='',
                                          body=message)
@@ -114,20 +138,18 @@ class BattleShipsSession(threading.Thread):
                                          body=message)
 
     def placeShip(self, ch, method, props, body):
-        n = body
+        x,y,name = body.split(":")
 
-        print(" [.] place(%s)" % n)
-        response = "HIT"
+        print(" [.] place(%s)" % name)
+        self.fields[name][int(y)][int(x)] = 1
+        #TODO kontroll et kas on valiidne positsioon
+        response = "OK"
         ch.basic_publish(exchange='',
                          routing_key=props.reply_to,
                          properties=pika.BasicProperties(correlation_id= \
                                                              props.correlation_id),
                          body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
-
-        self.updateChannel.basic_publish(exchange=self.prefix+'updates',
-                                         routing_key='',
-                                         body="WOLOLOLO")
 
     def gameStart(self, ch, method, props, body):
         n = body
