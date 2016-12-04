@@ -1,28 +1,42 @@
 import pika
 import threading
 
-class BattleShipsSession():
+class BattleShipsSession(threading.Thread):
     def __init__(self, server, name):
+        threading.Thread.__init__(self)
         self.server = server
         self.name = name
         self.prefix = server +"." + name + "."
+        self.players = []
+        self.lock = threading.Lock()
+        self.updateChannel = None
 
+    def addPlayer(self, name):
+        with self.lock:
+            self.players.append(name)
+            self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                             routing_key='',
+                                             body="%s joined the game"%name)
+
+
+    def run(self):
         self.initChannels()
 
     def initChannels(self):
-        self.updateConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.updateChannel = self.updateConnection.channel()
-        self.updateChannel.exchange_declare(exchange=self.prefix + 'updates',type='fanout')
+        with self.lock:
+            self.updateConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+            self.updateChannel = self.updateConnection.channel()
+            self.updateChannel.exchange_declare(exchange=self.prefix + 'updates',type='fanout')
 
-        self.placeship = threading.Thread(target=self.placeShipListener,args=(self.placeShip,))
-        self.bombship = threading.Thread(target=self.bombShipListener, args=(self.bombShip,))
-        self.gamestart = threading.Thread(target=self.gameStartListener, args=(self.gameStart,))
-        self.finishedplacing = threading.Thread(target=self.finishedPlacingListener, args=(self.finishedPlacing,))
+            self.placeship = threading.Thread(target=self.placeShipListener,args=(self.placeShip,))
+            self.bombship = threading.Thread(target=self.bombShipListener, args=(self.bombShip,))
+            self.gamestart = threading.Thread(target=self.gameStartListener, args=(self.gameStart,))
+            self.finishedplacing = threading.Thread(target=self.finishedPlacingListener, args=(self.finishedPlacing,))
 
-        self.placeship.start()
-        self.bombship.start()
-        self.gamestart.start()
-        self.finishedplacing.start()
+            self.placeship.start()
+            self.bombship.start()
+            self.gamestart.start()
+            self.finishedplacing.start()
 
     def placeShipListener(self, placeShip):
         self.placeShipConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -58,7 +72,7 @@ class BattleShipsSession():
         self.finishedPlacingChannel.queue_declare(queue=self.prefix + 'rpc_finished_placing')
 
         self.finishedPlacingChannel.basic_qos(prefetch_count=1)
-        self.finishedPlacingChannel.basic_consume(finishedPlacing, queue= self.prefix + 'rpc_start')
+        self.finishedPlacingChannel.basic_consume(finishedPlacing, queue= self.prefix + 'rpc_finished_placing')
         self.finishedPlacingChannel.start_consuming()
 
     def bombShip(self, ch, method, props, body):
@@ -109,7 +123,6 @@ class BattleShipsSession():
                                          routing_key='',
                                          body="WOLOLOLO")
 
-
     def finishedPlacing(self, ch, method, props, body):
         n = body
 
@@ -125,6 +138,3 @@ class BattleShipsSession():
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',
                                          body="WOLOLOLO")
-
-
-client = BattleShipsSession("North WU", "Game1")

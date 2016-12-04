@@ -1,13 +1,13 @@
 import pika
 import threading
 from collections import defaultdict
-from session import *
+from session import BattleShipsSession
 
 class Server():
     def __init__(self,name):
         self.name = name
-        self.rooms = defaultdict(BattleShipsSession)
-
+        self.rooms = {}
+        self.users = defaultdict(str)
         self.initListeners()
 
     def initListeners(self):
@@ -36,12 +36,12 @@ class Server():
         self.joinSessionChannel.start_consuming()
 
     def joinSession(self, ch, method, props, body):
-        n = body
+        n,user = body.split(":")
 
         print(" [.] joinsession(%s)" % n)
 
-        #rooms[n]
-        response = "JOINED"
+        self.rooms[n].addPlayer(user)
+        response = "JOINED:"+n
         ch.basic_publish(exchange='',
                          routing_key=props.reply_to,
                          properties=pika.BasicProperties(correlation_id= \
@@ -50,12 +50,13 @@ class Server():
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def createSession(self, ch, method, props, body):
-        n = body
+        n,user = body.split(":")
 
         print(" [.] createsession(%s)" % n)
-        #TODO room check for similar name
-    #    room = BattleShipsSession(self.name,n)
-    #    self.rooms[n] = room
+        room = BattleShipsSession(self.name,n)
+        self.rooms[n] = room
+        room.start()
+        room.addPlayer(user)
         response = "CREATED:"+n
         ch.basic_publish(exchange='',
                          routing_key=props.reply_to,

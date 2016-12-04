@@ -2,18 +2,18 @@ import pika
 import uuid
 import threading
 
-from commons import *
-
 class BattleShipsClient(object):
     def __init__(self):
         self.server = "North WU"
-        self.room = "Game1"
+        self.room = ""
         self.roomprefix = self.server + "." + self.room + "."
+        self.username = "Testing"
 
         self.initServerListeners()
-        self.initlisteners()
+    ##    self.initlisteners()
 
     def initlisteners(self):
+        self.roomprefix = self.server + "." + self.room + "."
         self.asynclistener = threading.Thread(target=self.listenForUpdates)
         self.asynclistener.start()
         self.placeShipConnecion = pika.BlockingConnection(pika.ConnectionParameters(
@@ -176,7 +176,7 @@ class BattleShipsClient(object):
                                    ),
                                    body=str(n))
         while self.response5 is None:
-            self.startGameConnecion.process_data_events()
+            self.startGameConnection.process_data_events()
         return self.response5
 
     def finishedPlacing(self):
@@ -191,11 +191,11 @@ class BattleShipsClient(object):
                                    ),
                                    body=str(n))
         while self.response6 is None:
-            self.finishedPlacingConnecion.process_data_events()
+            self.finishedPlacingConnection.process_data_events()
         return self.response6
 
     def createRoom(self,name):
-        n = name
+        n = name+ ":"+ self.username
         self.response3 = None
         self.corr_id3 = str(uuid.uuid4())
         self.createRoomChannel.basic_publish(exchange='',
@@ -209,10 +209,11 @@ class BattleShipsClient(object):
             self.createRoomConnection.process_data_events()
 
         self.room = self.response3.split(":")[1]
+        self.initlisteners()
         return self.response3
 
     def joinRoom(self,name):
-        n = name
+        n = name+":"+self.username
         self.response4 = None
         self.corr_id4 = str(uuid.uuid4())
         self.joinRoomChannel.basic_publish(exchange='',
@@ -225,7 +226,8 @@ class BattleShipsClient(object):
         while self.response4 is None:
             self.joinRoomConnection.process_data_events()
 
-  #      self.room = self.response4.split(":")[1]
+        self.room = self.response4.split(":")[1]
+        self.initlisteners()
         return self.response4
 
 fibonacci_rpc = BattleShipsClient()
@@ -242,3 +244,9 @@ print(" [.] Got %r" % response)
 print(" [x] Joining room")
 response = fibonacci_rpc.joinRoom("Test")
 print(" [.] Got %r" % response)
+print(" [x] startgaem room")
+response = fibonacci_rpc.startGame()
+print(" [.] Got %r" % response)
+print(" [x] finish shipping room")
+#response = fibonacci_rpc.finishedPlacing()
+#print(" [.] Got %r" % response)
