@@ -100,7 +100,16 @@ class BattleShipsClient(object):
         print(' [*] Waiting for updates. To exit press CTRL+C')
 
         def callback(ch, method, properties, body):
-            print(" [x] %r" % body)
+            parts = body.split(":")
+            if parts[0] == "BOMB":
+                if parts[1] != "SINK" and parts[2] != self.username:
+                    return
+                print body
+            elif parts[0] == "NEXT":
+                if parts[1] == self.username:
+                    print "YAY minu kaik"
+                else:
+                    print "Peab veel ootama"
 
         channel.basic_consume(callback,
                               queue=queue_name,
@@ -135,7 +144,7 @@ class BattleShipsClient(object):
             self.response6 = body
 
     def bomb(self, x,y,player):
-        n = str(x)+ ":" + str(y) + ":" + str(player)
+        n = str(x)+ ":" + str(y) + ":" + str(player) + ":" + self.username
         self.response2 = None
         self.corr_id2 = str(uuid.uuid4())
         self.bombShipChannel.basic_publish(exchange='',

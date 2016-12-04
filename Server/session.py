@@ -7,9 +7,15 @@ class BattleShipsSession(threading.Thread):
         self.server = server
         self.name = name
         self.prefix = server +"." + name + "."
-        self.players = []
         self.lock = threading.Lock()
         self.updateChannel = None
+
+        #somehow track who has ships
+        self.players = []
+        self.dead = []
+        self.state = "INIT"
+        self.playerturn = ""
+        self.shots = 0
 
     def addPlayer(self, name):
         with self.lock:
@@ -75,11 +81,15 @@ class BattleShipsSession(threading.Thread):
         self.finishedPlacingChannel.basic_consume(finishedPlacing, queue= self.prefix + 'rpc_finished_placing')
         self.finishedPlacingChannel.start_consuming()
 
-    def bombShip(self, ch, method, props, body):
-        n = body
 
-        print(" [.] bomb(%s)" % n)
-        response = "MISS"
+    def checkHit(self,x,y,player):
+        return "MISS"
+
+    def bombShip(self, ch, method, props, body):
+        x,y,player,attacker = body.slit(":")
+
+        print(" [.] bomb(%s,%s, %s)" %x,y,player)
+        response = self.checkHit(int(x),int(y),player,attacker)
         ch.basic_publish(exchange='',
                          routing_key=props.reply_to,
                          properties=pika.BasicProperties(correlation_id= \
@@ -87,9 +97,21 @@ class BattleShipsSession(threading.Thread):
                          body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
+        message = ":".join(["BOMB",response,player,x,y])
         self.updateChannel.basic_publish(exchange=self.prefix+'updates',
                                          routing_key='',
-                                         body="KABOOM")
+                                         body=message)
+
+        self.shots -= 1
+        if self.shots == 0:
+            self.notifyNextPlayer()
+
+    def notifyNextPlayer(self):
+        player = "Someone somewhere"
+        message = ":".join(["NEXT",player])
+        self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                         routing_key='',
+                                         body=message)
 
     def placeShip(self, ch, method, props, body):
         n = body
