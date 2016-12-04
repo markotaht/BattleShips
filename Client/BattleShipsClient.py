@@ -35,7 +35,29 @@ class BattleShipsClient(object):
         self.callback_queue2 = result.method.queue
 
         self.bombShipChannel.basic_consume(self.on_response2, no_ack=True,
-                                   queue=self.callback_queue2)
+                                           queue=self.callback_queue2)
+
+        self.startGameConnection = pika.BlockingConnection(pika.ConnectionParameters(
+            host='localhost'))
+
+        self.startGameChannel = self.startGameConnection.channel()
+
+        result = self.startGameChannel.queue_declare(exclusive=True)
+        self.callback_queue5 = result.method.queue
+
+        self.startGameChannel.basic_consume(self.on_response5, no_ack=True,
+                                           queue=self.callback_queue5)
+
+        self.finishedPlacingConnection = pika.BlockingConnection(pika.ConnectionParameters(
+            host='localhost'))
+
+        self.finishedPlacingChannel = self.finishedPlacingConnection.channel()
+
+        result = self.finishedPlacingChannel.queue_declare(exclusive=True)
+        self.callback_queue6 = result.method.queue
+
+        self.finishedPlacingChannel.basic_consume(self.on_response6, no_ack=True,
+                                            queue=self.callback_queue6)
 
     def initServerListeners(self):
         self.createRoomConnection = pika.BlockingConnection(pika.ConnectionParameters(
@@ -103,6 +125,15 @@ class BattleShipsClient(object):
         if self.corr_id4 == props.correlation_id:
             self.response4 = body
 
+    def on_response5(self, ch, method, props, body):
+        if self.corr_id5 == props.correlation_id:
+            self.response5 = body
+
+
+    def on_response6(self, ch, method, props, body):
+        if self.corr_id6 == props.correlation_id:
+            self.response6 = body
+
     def bomb(self, x,y,player):
         n = str(x)+ ":" + str(y) + ":" + str(player)
         self.response2 = None
@@ -132,6 +163,36 @@ class BattleShipsClient(object):
         while self.response is None:
             self.placeShipConnecion.process_data_events()
         return self.response
+
+    def startGame(self):
+        n = "start"
+        self.response5 = None
+        self.corr_id5 = str(uuid.uuid4())
+        self.startGameChannel.basic_publish(exchange='',
+                                   routing_key=self.roomprefix+'rpc_start',
+                                   properties=pika.BasicProperties(
+                                       reply_to=self.callback_queue5,
+                                       correlation_id=self.corr_id5,
+                                   ),
+                                   body=str(n))
+        while self.response5 is None:
+            self.startGameConnecion.process_data_events()
+        return self.response5
+
+    def finishedPlacing(self):
+        n = "You finished placing your ships."
+        self.response6 = None
+        self.corr_id6 = str(uuid.uuid4())
+        self.finishedPlacingChannel.basic_publish(exchange='',
+                                   routing_key=self.roomprefix+'rpc_finished_placing',
+                                   properties=pika.BasicProperties(
+                                       reply_to=self.callback_queue6,
+                                       correlation_id=self.corr_id6,
+                                   ),
+                                   body=str(n))
+        while self.response6 is None:
+            self.finishedPlacingConnecion.process_data_events()
+        return self.response6
 
     def createRoom(self,name):
         n = name
