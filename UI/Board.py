@@ -27,7 +27,6 @@ class Board:
         self.board[2][4] = TILE_SHIP
         self.board[2][5] = TILE_SHIP
         self.board[1][2] = TILE_MISS
-
         self._gameAreaWidth = 400
         self._tileWidth = self._gameAreaWidth / boardWidth
 
@@ -65,19 +64,24 @@ class Board:
 
                 #Drawing tiles
                 tile = self.board[x][y]
-                tileRect = (posX, posY, self._tileWidth, self._tileWidth)
+                tileRect = (posX +1, posY+1, self._tileWidth-2, self._tileWidth-2)
+                borderRect = (posX , posY , self._tileWidth , self._tileWidth )
                 if tile == TILE_EMPTY:
-                    rect = pygame.draw.rect(self.windowSurface, COLOR_BLACK, tileRect, 2)
-                elif tile == TILE_SHIP:
+                    pygame.draw.rect(self.windowSurface, COLOR_BLACK, borderRect, 2)
+                    rect = pygame.draw.rect(self.windowSurface, COLOR_WHITE, tileRect, 0)
+                if tile == TILE_SHIP:
                     rect = pygame.draw.rect(self.windowSurface, COLOR_DARK_GREY, tileRect, 0)
+                    pygame.draw.rect(self.windowSurface, COLOR_DARK_GREY, borderRect, 2)
                 elif tile == TILE_SHIP_HIT:
+                    pygame.draw.rect(self.windowSurface, COLOR_DARK_GREY, borderRect, 2)
                     rect = pygame.draw.rect(self.windowSurface, COLOR_DARK_GREY, tileRect, 0)
                     pygame.draw.line(self.windowSurface, COLOR_RED, (posX, posY),
                                      (posX + self._tileWidth, posY + self._tileWidth), 3)
                     pygame.draw.line(self.windowSurface, COLOR_RED, (posX + self._tileWidth, posY),
                                      (posX, posY + self._tileWidth), 3)
                 elif tile == TILE_MISS:
-                    rect = pygame.draw.rect(self.windowSurface, COLOR_BLACK, tileRect, 2)
+                    pygame.draw.rect(self.windowSurface, COLOR_BLACK, borderRect, 2)
+                    rect = pygame.draw.rect(self.windowSurface, COLOR_WHITE, tileRect, 0)
                     pygame.draw.circle(self.windowSurface, COLOR_DARK_GREY,
                                        (posX + self._tileWidth/2, posY + self._tileWidth/2),
                                        self._tileWidth / 6)
