@@ -1,18 +1,19 @@
 from Assets import *
 from Util import *
-from UI.external import eztext
+from external import eztext
 
 
 class MainMenuScreen:
 
-    def init(self, windowSurface):
+    def init(self, ui, windowSurface):
+        self.ui = ui
         self.windowSurface = windowSurface
         #TODO: Move fonts to Assets
         self.tinyFont = pygame.font.SysFont(None, 18)
         self.smallFont = pygame.font.SysFont(None, 24)
         self.mediumFont = pygame.font.SysFont(None, 36)
         self.largeFont = pygame.font.SysFont(None, 48)
-        self.updateCounter = 0;
+        self.updateCounter = 0
 
         y = 0
 
@@ -59,7 +60,7 @@ class MainMenuScreen:
             print(value)
             self._nameTextBox.focus = False
             self._nameTextBox.color = COLOR_BLACK
-            self.name = value;
+            self.ui.name = value;
 
         # Blink every 500ms at 30FPS
         if self._nameTextBox.focus and self.updateCounter % 15 == 0:
@@ -78,9 +79,9 @@ class MainMenuScreen:
                     #User did click somewhere but it's not on the name box - remove focus from it
                     if hasattr(self, 'name') == False:
                         if(len(self._nameTextBox.value) > 0):
-                            self.name = self._nameTextBox.value
+                            self.ui.name = self._nameTextBox.value
                         else:
-                            self.name = "Default"
+                            self.ui.name = "Default"
                     self._nameTextBox.focus = False
                     self._nameTextBox.color = COLOR_BLACK
                     break
@@ -112,8 +113,13 @@ class MainMenuScreen:
             serverButtonRect = self.windowSurface.blit(serverText, serverTextRect)
 
             if clickedOnRect(serverButtonRect, events):
-                print "Clicked on " + ip + " " + str(port) + " with name " + self.name
+                if self.ui.name == "__me__":
+                    #Not allowed name
+                    self.ui.name = "DefaultName"
+
+                print "Clicked on " + ip + " " + str(port) + " with name " + self.ui.name
                 #TODO: Connect and switch screens
+                self.ui.loadSessionSelectScreen()
 
 
     def clearServers(self):

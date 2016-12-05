@@ -5,12 +5,10 @@ from Board import *
 
 class SetupShipsScreen:
 
-    def init(self, windowSurface, boardWidth):
+    def init(self, ui, windowSurface, boardWidth):
+        self.ui = ui
         self.windowSurface = windowSurface
         self.boardWidth = boardWidth
-        self.board = Board()
-        self.board.init(windowSurface, boardWidth)
-
         #TODO: Move fonts to Assets
         self.tinyFont = pygame.font.SysFont(None, 18)
         self.smallFont = pygame.font.SysFont(None, 24)
@@ -18,6 +16,172 @@ class SetupShipsScreen:
         self.largeFont = pygame.font.SysFont(None, 48)
 
 
+        self.clear()
+
+    def clear(self):
+        self.board = Board()
+        self.board.init(self.windowSurface, self.boardWidth, self)
+
+        #Contains arrays in the form[shipSize, amount]
+        self._availableShips = []
+        #Contains arrays in the form[shipStartX:int, shipStartY:int, vertical:boolean, shipLength:int]
+        self._placedShips = []
+        self._verticalPlacement = True
+
+        if self.boardWidth == 8:
+            self._selectedSize = 4
+            self._availableShips.append([4, 1]);
+            self._availableShips.append([3, 1]);
+            self._availableShips.append([2, 2]);
+            self._availableShips.append([1, 3]);
+        elif self.boardWidth == 10:
+            self._selectedSize = 5
+            self._availableShips.append([5, 1]);
+            self._availableShips.append([4, 1]);
+            self._availableShips.append([3, 2]);
+            self._availableShips.append([2, 3]);
+            self._availableShips.append([1, 4]);
+        elif self.boardWidth == 12:
+            self._selectedSize = 6
+            self._availableShips.append([6, 1]);
+            self._availableShips.append([5, 1]);
+            self._availableShips.append([4, 2]);
+            self._availableShips.append([3, 3]);
+            self._availableShips.append([2, 4]);
+            self._availableShips.append([1, 5]);
+        else:
+            print "Warning! Unsupported board size."
+
     def update(self, events):
+
+        #if escapePressed(events):
+            #TODO: Handle
+
+        #SETUP SHIPS TEXT
+        setupShipsText = self.mediumFont.render("Setup your ships:", True, COLOR_BLACK)
+        setupShipsTextRect = setupShipsText.get_rect()
+        setupShipsTextRect.left = 10
+        setupShipsTextRect.top = 10
+        self.windowSurface.blit(setupShipsText, setupShipsTextRect)
+
+        y = 90
+        for ship in self._availableShips:
+            shipSize = ship[0]
+            shipAmount = ship[1]
+
+            if shipSize == self._selectedSize:
+                color = COLOR_GREEN
+            else:
+                color = COLOR_WHITE
+
+            shipText = self.largeFont.render(u'\ua258'*shipSize + " x" + str(shipAmount), True, COLOR_BLACK, color)
+            shipTextRect = shipText.get_rect()
+            shipTextRect.right = 190
+            shipTextRect.centery = y
+            y += 40
+
+            shipRect = self.windowSurface.blit(shipText, shipTextRect)
+
+            if clickedOnRect(shipRect, events):
+                self._selectedSize = shipSize
+
+        #SHIP ROTATION TEXT
+        if self._verticalPlacement:
+            text = "Placing vertically"
+        else:
+            text = "Placing horizontally"
+
+        rotationText = self.mediumFont.render(text, True, COLOR_WHITE, COLOR_BLACK)
+        rotationTextRect = rotationText.get_rect()
+        rotationTextRect.left = 10
+        rotationTextRect.top = 350
+        rotationRect = self.windowSurface.blit(rotationText, rotationTextRect)
+
+        if clickedOnRect(rotationRect, events):
+            self._verticalPlacement = not self._verticalPlacement
+
+        #CLEAR BOARD TEXT
+        clearText = self.mediumFont.render("Clear board", True, COLOR_WHITE, COLOR_BLACK)
+        clearTextRect = clearText.get_rect()
+        clearTextRect.left = 10
+        clearTextRect.top = 400
+        clearRect = self.windowSurface.blit(clearText, clearTextRect)
+
+        if clickedOnRect(clearRect, events):
+            self.clear()
+
+        #ALL SHIPS PLACED
+        if len(self._availableShips) == 0:
+            continueText = self.mediumFont.render("Continue", True, COLOR_WHITE, COLOR_BLACK)
+            continueTextRect = continueText.get_rect()
+            continueTextRect.left = 50
+            continueTextRect.top = 220
+            continueRect = self.windowSurface.blit(continueText, continueTextRect)
+
+            if clickedOnRect(continueRect, events):
+                print "Ships placed"
+                #TODO: pass self._placedShips
+                self.ui.loadGameScreen(self.board)
+
         self.board.update(events)
 
+    #Called by the board whenever there's a click
+    def onBoardClick(self, tileX, tileY):
+        #print str(tileX) + " " + str(tileY)
+        success = self.tryPlaceShip(tileX, tileY)
+
+        if success:
+            #Reduce the selected ship amount
+            for ship in self._availableShips:
+                shipSize = ship[0]
+                shipAmount = ship[1]
+
+                if shipSize == self._selectedSize:
+                    if shipAmount == 1:
+                        #Remove this size ships altogether
+                        self._availableShips.remove(ship)
+                        self._selectedSize = 0
+                    else:
+                        ship[1] = shipAmount - 1
+
+            self._placedShips.append([tileX, tileY, self._verticalPlacement, self._selectedSize])
+
+
+    def tryPlaceShip(self, tileX, tileY):
+        #TODO: Also check surroundings for conflicting ships
+        shipSize = self._selectedSize
+        if self._verticalPlacement:
+            if tileX > self.boardWidth - shipSize:
+                #The ship would be out of bounds
+                return False
+
+            #Check if the area around the ship is free
+            for x in range(tileX - 1, tileX + shipSize + 1):
+                for y in range(tileY - 1, tileY + 2):
+                    if x < 0 or y < 0 or x >= self.boardWidth or y >= self.boardWidth:
+                        #Out of range, can skip these tiles
+                        continue
+                    if self.board.getTileByIndex(x, y) != TILE_EMPTY:
+                        return False
+
+            #If this is reached, can place the ship
+            for i in range(tileX, tileX + shipSize):
+                self.board.setTileByIndex(i, tileY, TILE_SHIP)
+        else:
+            if tileY > self.boardWidth - shipSize:
+                #The ship would be out of bounds
+                return False
+
+            #Check if the area around the ship is free
+            for x in range(tileX - 1, tileX + 2):
+                for y in range(tileY - 1, tileY + + shipSize + 1):
+                    if x < 0 or y < 0 or x >= self.boardWidth or y >= self.boardWidth:
+                        #Out of range, can skip these tiles
+                        continue
+                    if self.board.getTileByIndex(x, y) != TILE_EMPTY:
+                        return False
+
+            #If this is reached, can place the ship
+            for i in range(tileY, tileY + shipSize):
+                self.board.setTileByIndex(tileX, i, TILE_SHIP)
+        return True

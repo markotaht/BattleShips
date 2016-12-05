@@ -10,3 +10,11 @@ def clickedOnRect(rect, events):
             if rect.collidepoint(mousePos):
                 return True
     return False
+
+#Return True when escape was pressed
+def escapePressed(events):
+    for event in events:
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                return True
+    return False
