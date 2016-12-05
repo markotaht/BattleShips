@@ -13,9 +13,11 @@ class Server():
     def initListeners(self):
         self.joinsession = threading.Thread(target=self.joinSessionListner, args=(self,))
         self.createsession = threading.Thread(target=self.createSessionListner, args=(self,))
+        self.getRoomsSession = threading.Thread(target=self.getRoomsListener,args=(self,))
 
         self.createsession.start()
         self.joinsession.start()
+        self.getRoomsSession.start()
 
     def createSessionListner(self,parent):
         self.createSessionConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -34,6 +36,15 @@ class Server():
         self.joinSessionChannel.basic_qos(prefetch_count=1)
         self.joinSessionChannel.basic_consume(parent.joinSession, parent.name+"."+"rpc_joinSession")
         self.joinSessionChannel.start_consuming()
+
+    def getRoomsListener(self,parent):
+        self.getRoomsConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        self.getRoomsChannel = self.getRoomsConnection.channel()
+        self.getRoomsChannel.queue_declare(queue=parent.name+"."+"rpc_getRooms")
+
+        self.getRoomsChannel.basic_qos(prefetch_count=1)
+        self.getRoomsChannel.basic_consume(parent.getRooms, parent.name+"."+"rpc_getRooms")
+        self.getRoomsChannel.start_consuming()
 
     def joinSession(self, ch, method, props, body):
         n,user = body.split(":")
@@ -64,5 +75,18 @@ class Server():
                                                              props.correlation_id),
                          body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    def getRooms(self,ch, method,props, body):
+        n = body
+
+        print(" [.] getRooms" )
+        response = ":".join(self.rooms.keys())
+        ch.basic_publish(exchange='',
+                         routing_key=props.reply_to,
+                         properties=pika.BasicProperties(correlation_id= \
+                                                             props.correlation_id),
+                         body=str(response))
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
 server = Server("North WU")

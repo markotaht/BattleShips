@@ -1,5 +1,6 @@
 import pika
 import threading
+import time
 
 class BattleShipsSession(threading.Thread):
     def __init__(self, server, name):
@@ -10,22 +11,23 @@ class BattleShipsSession(threading.Thread):
         self.lock = threading.Lock()
         self.updateChannel = None
 
-        self.players = []
+        self.players = {}
+        self.order = []
         self.fieldSize = (10,10)
         self.fields = {}
         self.dead = []
         self.state = "INIT"
-        self.playerturn = ""
+        self.playerturn = 0
         self.shots = 0
 
     def addPlayer(self, name):
         with self.lock:
-            self.players.append(name)
+            self.players[name] = time.time()
             self.fields[name] = [[0 for i in range(self.fieldSize[1])] for j in range(self.fieldSize[0])]
+            self.order.append(name)
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                              routing_key='',
                                              body="%s joined the game"%name)
-
 
     def run(self):
         self.initChannels()
@@ -82,12 +84,13 @@ class BattleShipsSession(threading.Thread):
         self.finishedPlacingChannel.basic_consume(finishedPlacing, queue= self.prefix + 'rpc_finished_placing')
         self.finishedPlacingChannel.start_consuming()
 
-
     def checkHit(self,x,y,player):
+        if self.fields[player][y][x] == 1:
+            return "HIT"
         return "MISS"
 
     def sunk(self,x,y,player):
-        #TODO lisada juurde et kas on laev lõppenud või mitte
+        #TODO lisada juurde et kas on laev loppenud voi mitte
         for i in range(x-1,0,-1):
             if self.fields[player][y][x] == 1:
                 return False
@@ -131,11 +134,12 @@ class BattleShipsSession(threading.Thread):
             self.notifyNextPlayer()
 
     def notifyNextPlayer(self):
-        player = "Someone somewhere"
-        message = ":".join(["NEXT",player])
+        message = ":".join(["NEXT",self.order[self.playerturn]])
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',
                                          body=message)
+        self.playerturn = (self.playerturn+1)%len(self.order)
+        self.shots = len(self.order)-1
 
     def placeShip(self, ch, method, props, body):
         x,y,name = body.split(":")
@@ -156,6 +160,7 @@ class BattleShipsSession(threading.Thread):
 
         print("Staring game")
         response = "OK"
+        self.state = "PLAY"
         ch.basic_publish(exchange='',
                          routing_key=props.reply_to,
                          properties=pika.BasicProperties(correlation_id= \
@@ -165,7 +170,9 @@ class BattleShipsSession(threading.Thread):
 
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',
-                                         body="WOLOLOLO")
+                                         body="START")
+
+        self.notifyNextPlayer()
 
     def finishedPlacing(self, ch, method, props, body):
         n = body
