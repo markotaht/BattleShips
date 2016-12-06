@@ -12,16 +12,18 @@ class BattleShipsClient(object):
         self.roomprefix = ""
 
         self.username = "Testing"
+        self.state = "INIT"
 
+    def connect(self):
         self.asyncConnection = pika.BlockingConnection(pika.ConnectionParameters(
-                host='localhost'))
+            host='localhost'))
 
         self.syncConnection = pika.BlockingConnection(pika.ConnectionParameters(
-                host='localhost'))
+            host='localhost'))
 
-        self.state = "INIT"
+        #TODO get Server name from UI
+        #self.server = server
         self.initServerListeners()
-    ##    self.initlisteners()
 
     def initlisteners(self):
         self.roomprefix = self.server + "." + self.room
@@ -274,26 +276,26 @@ class BattleShipsClient(object):
         self.initlisteners()
         return self.response
 """
-fibonacci_rpc = BattleShipsClient()
+#fibonacci_rpc = BattleShipsClient()
 
 print(" [x] Requesting place")
-#response = fibonacci_rpc.placeShip(0,0,4)
+#response = fibonacci_rpc.placeShip(0,0,orient,"ME")
 #print(" [.] Got %r" % response)
 print(" [x] Requesting bomb")
-#response = fibonacci_rpc.bomb(0,0,"Test")
+#response = fibonacci_rpc.bomb(0,0,"target","ME")
 #print(" [.] Got %r" % response)
 print(" [x] Requesting room")
-response = fibonacci_rpc.createRoom("Test","ME")
-print(" [.] Got %r" % response)
+#response = fibonacci_rpc.createRoom("Test","ME")
+#print(" [.] Got %r" % response)
 print(" [x] Joining room")
-response = fibonacci_rpc.joinRoom("Test","ME")
-print(" [.] Got %r" % response)
+#response = fibonacci_rpc.joinRoom("Test","ME")
+#print(" [.] Got %r" % response)
 print(" [x] startgaem room")
 #response = fibonacci_rpc.startGame()
 #print(" [.] Got %r" % response)
 print(" [x] finish shipping room")
-response = fibonacci_rpc.finishedPlacing()
-print(" [.] Got %r" % response)
+#response = fibonacci_rpc.finishedPlacing("ME")
+#print(" [.] Got %r" % response)
 print(" [x] Get rooms")
-response = fibonacci_rpc.getRooms("")
-print(" [.] Got %r" % response)
+#response = fibonacci_rpc.getRooms("")
+#print(" [.] Got %r" % response)

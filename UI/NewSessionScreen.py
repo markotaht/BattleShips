@@ -48,6 +48,7 @@ class NewSessionScreen:
 
             if clickedOnRect(sizeRect, events):
                 print "Clicked on " + str(size) + " size"
+                self.ui.client.createRoom("RoomName","boardwidth","boardheight","Username")
                 # TODO: Create new session with the given size
                 self.ui.loadSetupShipsScreen(size)
 

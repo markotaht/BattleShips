@@ -119,6 +119,8 @@ class MainMenuScreen:
 
                 print "Clicked on " + ip + " " + str(port) + " with name " + self.ui.name
                 #TODO: Connect and switch screens
+                #TODO: lisada siin severi nimi millega uhineda, hetkle default North WU
+                self.ui.client.connect()
                 self.ui.loadSessionSelectScreen()
 
 

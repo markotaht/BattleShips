@@ -48,6 +48,9 @@ class SessionSelectScreen:
 
         y = 150
 
+        #TODO
+        #To get sessions
+        #self.ui.client.getRooms("")
         if len(self._sessions) == 0:
             # no sessions
             sessions = [["No sessions found", 0, 0]]
@@ -81,6 +84,7 @@ class SessionSelectScreen:
                 print "Clicked on " + name + " session"
                 # TODO: Join session and switch screens
                 #TODO: Determine if the user is reconnecting and has a previous state
+                self.ui.client.joinRoom("RoomName","Username")
                 #or is starting clean
                 self.ui.loadSetupShipsScreen(boardSize)
 

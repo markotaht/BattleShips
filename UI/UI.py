@@ -6,6 +6,8 @@ from NewSessionScreen import *
 from GameScreen import *
 from Assets import *
 
+from Client import BattleShipsClient
+
 class UI:
     def __init__(self):
         # set up pygame
@@ -26,8 +28,8 @@ class UI:
         #board = Board()
         #board.init(self.windowSurface, 8, None)
         #self.loadGameScreen(board)
-
-        self.run();
+        self.client = BattleShipsClient.BattleShipsClient()
+        self.run()
 
     def run(self):
         clock = pygame.time.Clock()

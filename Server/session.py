@@ -3,7 +3,7 @@ import threading
 import time
 
 class BattleShipsSession(threading.Thread):
-    def __init__(self, server, name):
+    def __init__(self, server, name,width,height):
         threading.Thread.__init__(self)
         self.server = server
         self.name = name
@@ -13,7 +13,7 @@ class BattleShipsSession(threading.Thread):
 
         self.players = {}
         self.order = []
-        self.fieldSize = (10,10)
+        self.fieldSize = (width,height)
         self.fields = {}
         self.dead = []
         self.state = "INIT"
@@ -141,12 +141,15 @@ class BattleShipsSession(threading.Thread):
         self.playerturn = (self.playerturn+1)%len(self.order)
         self.shots = len(self.order)-1
 
+    def __placeShipOnField(self,x,y,dir,name):
+        self.fields[name][y][x] = 1
+        #SOemthing something direction
+
     def placeShip(self, ch, method, props, body):
-        x,y,name = body.split(":")
+        x,y,dir,name = body.split(":")
 
         print(" [.] place(%s)" % name)
-        self.fields[name][int(y)][int(x)] = 1
-        #TODO kontroll et kas on valiidne positsioon
+        self.__placeShipOnField(int(x),int(y),dir,name)
         response = "OK"
         ch.basic_publish(exchange='',
                          routing_key=props.reply_to,

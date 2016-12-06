@@ -61,10 +61,10 @@ class Server():
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def createSession(self, ch, method, props, body):
-        n,user = body.split(":")
+        n,whith,height,user = body.split(":")
 
         print(" [.] createsession(%s)" % n)
-        room = BattleShipsSession(self.name,n)
+        room = BattleShipsSession(self.name,n,int(whith),int(height))
         self.rooms[n] = room
         room.start()
         room.addPlayer(user)

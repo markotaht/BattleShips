@@ -121,6 +121,8 @@ class SetupShipsScreen:
             if clickedOnRect(continueRect, events):
                 print "Ships placed"
                 #TODO: pass self._placedShips
+                #TODO correction: After every ship is placed info needs to be given to server
+                #self.ui.client.finishedPlacing("ME") Once all done send this
                 self.ui.loadGameScreen(self.board)
 
         self.board.update(events)
@@ -145,6 +147,8 @@ class SetupShipsScreen:
                         ship[1] = shipAmount - 1
 
             self._placedShips.append([tileX, tileY, self._verticalPlacement, self._selectedSize])
+            #Siin vist lisada
+            #self.ui.client.placeShip(x,y,dir,"ME")
 
 
     def tryPlaceShip(self, tileX, tileY):
