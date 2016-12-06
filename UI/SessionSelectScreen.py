@@ -50,7 +50,7 @@ class SessionSelectScreen:
 
         #TODO
         #To get sessions
-        #self.ui.client.getRooms("")
+        self.ui.client.getRooms("")
         if len(self._sessions) == 0:
             # no sessions
             sessions = [["No sessions found", 0, 0]]

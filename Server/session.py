@@ -10,6 +10,7 @@ class BattleShipsSession(threading.Thread):
         self.prefix = server +"." + name + "."
         self.lock = threading.Lock()
         self.updateChannel = None
+        self.connections = []
 
         self.players = {}
         self.order = []
@@ -37,6 +38,7 @@ class BattleShipsSession(threading.Thread):
             self.updateConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
             self.updateChannel = self.updateConnection.channel()
             self.updateChannel.exchange_declare(exchange=self.prefix + 'updates',type='fanout')
+            self.connections.append(self.updateConnection)
 
             self.placeship = threading.Thread(target=self.placeShipListener,args=(self.placeShip,))
             self.bombship = threading.Thread(target=self.bombShipListener, args=(self.bombShip,))
