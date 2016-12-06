@@ -18,11 +18,11 @@ class GameScreen:
         self.activeBoard = self.boards["__me__"]
         #Turn = Player whose turn it actually is
         self.turnPlayer = "__me__"
-        #TODO: Move fonts to Assets
-        self.tinyFont = pygame.font.SysFont(None, 18)
-        self.smallFont = pygame.font.SysFont(None, 24)
-        self.mediumFont = pygame.font.SysFont(None, 36)
-        self.largeFont = pygame.font.SysFont(None, 48)
+
+        self.tinyFont = tinyFont
+        self.smallFont = smallFont
+        self.mediumFont = mediumFont
+        self.largeFont = largeFont
 
         #Add other players for debugging
         board2 = Board()

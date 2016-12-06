@@ -8,11 +8,11 @@ class MainMenuScreen:
     def init(self, ui, windowSurface):
         self.ui = ui
         self.windowSurface = windowSurface
-        #TODO: Move fonts to Assets
-        self.tinyFont = pygame.font.SysFont(None, 18)
-        self.smallFont = pygame.font.SysFont(None, 24)
-        self.mediumFont = pygame.font.SysFont(None, 36)
-        self.largeFont = pygame.font.SysFont(None, 48)
+
+        self.tinyFont = tinyFont
+        self.smallFont = smallFont
+        self.mediumFont = mediumFont
+        self.largeFont = largeFont
         self.updateCounter = 0
 
         y = 0
