@@ -2,6 +2,9 @@ import pika
 import threading
 import time
 
+from commons import createRPCListener
+from types import MethodType
+
 class BattleShipsSession(threading.Thread):
     def __init__(self, server, name,width,height):
         threading.Thread.__init__(self)
@@ -39,53 +42,67 @@ class BattleShipsSession(threading.Thread):
             self.updateChannel = self.updateConnection.channel()
             self.updateChannel.exchange_declare(exchange=self.prefix + 'updates',type='fanout')
             self.connections.append(self.updateConnection)
-
+            """
             self.placeship = threading.Thread(target=self.placeShipListener,args=(self.placeShip,))
             self.bombship = threading.Thread(target=self.bombShipListener, args=(self.bombShip,))
             self.gamestart = threading.Thread(target=self.gameStartListener, args=(self.gameStart,))
             self.finishedplacing = threading.Thread(target=self.finishedPlacingListener, args=(self.finishedPlacing,))
+            """
+
+            self.placeShipListener = MethodType(createRPCListener(self,'rpc_place_ship',self.placeShipCallback), self, BattleShipsSession)
+            self.placeship = threading.Thread(target=self.placeShipListener)
+
+            self.bombShipListener = MethodType(createRPCListener(self,'rpc_bomb',self.bombShipCallback), self, BattleShipsSession)
+            self.bombship = threading.Thread(target=self.bombShipListener)
+
+            self.gameStartListener = MethodType(createRPCListener(self,'rpc_start',self.gameStartCallback), self, BattleShipsSession)
+            self.gamestart = threading.Thread(target=self.gameStartListener)
+
+            self.finishedPlaceingListener = MethodType(createRPCListener(self,'rpc_finished_placing',self.finishedPlacingCallback), self, BattleShipsSession)
+            self.finishedPlacing = threading.Thread(target=self.finishedPlaceingListener)
 
             self.placeship.start()
             self.bombship.start()
             self.gamestart.start()
-            self.finishedplacing.start()
+            self.finishedPlacing.start()
 
-    def placeShipListener(self, placeShip):
-        self.placeShipConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.placeShipChannel = self.placeShipConnection.channel()
-        self.placeShipChannel.queue_declare(queue=self.prefix + 'rpc_place_ship')
+    """
+        def placeShipListener(self, placeShip):
+            self.placeShipConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+            self.placeShipChannel = self.placeShipConnection.channel()
+            self.placeShipChannel.queue_declare(queue=self.prefix + 'rpc_place_ship')
 
-        self.placeShipChannel.basic_qos(prefetch_count=1)
-        self.placeShipChannel.basic_consume(placeShip, queue=self.prefix + 'rpc_place_ship')
-        self.placeShipChannel.start_consuming()
+            self.placeShipChannel.basic_qos(prefetch_count=1)
+            self.placeShipChannel.basic_consume(placeShip, queue=self.prefix + 'rpc_place_ship')
+            self.placeShipChannel.start_consuming()
 
-    def bombShipListener(self, bombShip):
-        self.bombShipConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.bombShipChannel = self.bombShipConnection.channel()
-        self.bombShipChannel.queue_declare(queue=self.prefix + 'rpc_bomb')
+        def bombShipListener(self, bombShip):
+            self.bombShipConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+            self.bombShipChannel = self.bombShipConnection.channel()
+            self.bombShipChannel.queue_declare(queue=self.prefix + 'rpc_bomb')
 
-        self.bombShipChannel.basic_qos(prefetch_count=1)
-        self.bombShipChannel.basic_consume(bombShip, queue= self.prefix + 'rpc_bomb')
-        self.bombShipChannel.start_consuming()
+            self.bombShipChannel.basic_qos(prefetch_count=1)
+            self.bombShipChannel.basic_consume(bombShip, queue= self.prefix + 'rpc_bomb')
+            self.bombShipChannel.start_consuming()
 
-    def gameStartListener(self, gameStart):
-        self.gameStartConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.gameStartChannel = self.gameStartConnection.channel()
-        self.gameStartChannel.queue_declare(queue=self.prefix + 'rpc_start')
+        def gameStartListener(self, gameStart):
+            self.gameStartConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+            self.gameStartChannel = self.gameStartConnection.channel()
+            self.gameStartChannel.queue_declare(queue=self.prefix + 'rpc_start')
 
-        self.gameStartChannel.basic_qos(prefetch_count=1)
-        self.gameStartChannel.basic_consume(gameStart, queue= self.prefix + 'rpc_start')
-        self.gameStartChannel.start_consuming()
+            self.gameStartChannel.basic_qos(prefetch_count=1)
+            self.gameStartChannel.basic_consume(gameStart, queue= self.prefix + 'rpc_start')
+            self.gameStartChannel.start_consuming()
 
-    def finishedPlacingListener(self, finishedPlacing):
-        self.finishedPlacingConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.finishedPlacingChannel = self.finishedPlacingConnection.channel()
-        self.finishedPlacingChannel.queue_declare(queue=self.prefix + 'rpc_finished_placing')
+        def finishedPlacingListener(self, finishedPlacing):
+            self.finishedPlacingConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+            self.finishedPlacingChannel = self.finishedPlacingConnection.channel()
+            self.finishedPlacingChannel.queue_declare(queue=self.prefix + 'rpc_finished_placing')
 
-        self.finishedPlacingChannel.basic_qos(prefetch_count=1)
-        self.finishedPlacingChannel.basic_consume(finishedPlacing, queue= self.prefix + 'rpc_finished_placing')
-        self.finishedPlacingChannel.start_consuming()
-
+            self.finishedPlacingChannel.basic_qos(prefetch_count=1)
+            self.finishedPlacingChannel.basic_consume(finishedPlacing, queue= self.prefix + 'rpc_finished_placing')
+            self.finishedPlacingChannel.start_consuming()
+    """
     def checkHit(self,x,y,player):
         if self.fields[player][y][x] == 1:
             return "HIT"
@@ -110,31 +127,50 @@ class BattleShipsSession(threading.Thread):
                 return False
         return True
 
-    def bombShip(self, ch, method, props, body):
-        x,y,player,attacker = body.slit(":")
+    def bombShipCallback(self,request):
+        x, y, player, attacker = request.slit(":")
 
         print(" [.] bomb(%s,%s, %s)" %x,y,player)
         response = self.checkHit(int(x),int(y),player,attacker)
-        ch.basic_publish(exchange='',
-                         routing_key=props.reply_to,
-                         properties=pika.BasicProperties(correlation_id= \
-                                                             props.correlation_id),
-                         body=str(response))
-        ch.basic_ack(delivery_tag=method.delivery_tag)
 
         #TODO teha paremaks ja lisada juurde laeva edastamine koigile
         if self.sunk(int(x),int(y),player):
             message = ":".join(["SUNK",x,y,player])
         else:
             message = ":".join(["BOMB",response,player,x,y])
-        self.updateChannel.basic_publish(exchange=self.prefix+'updates',
-                                         routing_key='',
-                                         body=message)
 
+        #TODO see kuidagi teisiti vb handlida
         self.shots -= 1
         if self.shots == 0:
             self.notifyNextPlayer()
 
+        return response, message
+    """
+        def bombShip(self, ch, method, props, body):
+            x,y,player,attacker = body.slit(":")
+
+            print(" [.] bomb(%s,%s, %s)" %x,y,player)
+            response = self.checkHit(int(x),int(y),player,attacker)
+            ch.basic_publish(exchange='',
+                             routing_key=props.reply_to,
+                             properties=pika.BasicProperties(correlation_id= \
+                                                                 props.correlation_id),
+                             body=str(response))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+
+            #TODO teha paremaks ja lisada juurde laeva edastamine koigile
+            if self.sunk(int(x),int(y),player):
+                message = ":".join(["SUNK",x,y,player])
+            else:
+                message = ":".join(["BOMB",response,player,x,y])
+            self.updateChannel.basic_publish(exchange=self.prefix+'updates',
+                                             routing_key='',
+                                             body=message)
+
+            self.shots -= 1
+            if self.shots == 0:
+                self.notifyNextPlayer()
+    """
     def notifyNextPlayer(self):
         message = ":".join(["NEXT",self.order[self.playerturn]])
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
@@ -147,6 +183,15 @@ class BattleShipsSession(threading.Thread):
         self.fields[name][y][x] = 1
         #SOemthing something direction
 
+    def placeShipCallback(self, request):
+        x, y, dir, name = request.split(":")
+        print(" [.] place(%s)" % name)
+        self.__placeShipOnField(int(x),int(y),dir,name)
+        response = "OK"
+
+        return response, ""
+
+    """
     def placeShip(self, ch, method, props, body):
         x,y,dir,name = body.split(":")
 
@@ -159,7 +204,14 @@ class BattleShipsSession(threading.Thread):
                                                              props.correlation_id),
                          body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
+    """
 
+    def gameStartCallback(self,request):
+        print("Staring game")
+        self.state = "PLAY"
+        return "OK","START"
+
+    """
     def gameStart(self, ch, method, props, body):
         n = body
 
@@ -178,7 +230,13 @@ class BattleShipsSession(threading.Thread):
                                          body="START")
 
         self.notifyNextPlayer()
+    """
 
+    def finishedPlacingCallback(self,request):
+        print("Finished placing ships")
+        return "READY", ""
+
+    """
     def finishedPlacing(self, ch, method, props, body):
         n = body
 
@@ -194,3 +252,4 @@ class BattleShipsSession(threading.Thread):
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',
                                          body="WOLOLOLO")
+    """

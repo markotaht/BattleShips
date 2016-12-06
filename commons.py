@@ -1,7 +1,7 @@
 import pika
 
 #BLACK MAGIC to reduce code size
-def createRPCListener(parent, queue,callback, host='localhost',globalmessage=False):
+def createRPCListener(parent, queue,callback,globalmessage=False,host='localhost'):
 
     def receiver(ch, method, props, body):
         response,globmessage = callback(body)
