@@ -42,7 +42,7 @@ class Session(threading.Thread):
                 self.order.append(name)
                 self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                                  routing_key='',
-                                                 body="%s joined the game"%name)
+                                                 body="NEWPLAYER:%s"%name)
                 return True
 
     def initChannels(self):
@@ -76,7 +76,10 @@ class Session(threading.Thread):
         success = self.placeShips(name, ships.split("|"))
         if success:
             self.playerReady[name] = True
-            return "OK", "READY:" + name
+            self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                             routing_key='',
+                                             body="READY:%s" % name)
+            return "OK", "READY2:" + name
         else:
             return "FAIL", ""
 

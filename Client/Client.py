@@ -137,6 +137,22 @@ class Client(object):
                     print "My turn"
                 else:
                     print "Not my turn yet"
+            elif parts[0] == "READY":
+                print "Player %s is ready"%parts[1]
+                try:
+                    self.screen.addReadyPlayer(parts[1], True)
+                except AttributeError:
+                    #IF we are the player
+                    pass
+            elif parts[0] == "NEWPLAYER":
+                print "%s joined the game"%parts[1]
+                try:
+                    self.screen.addReadyPlayer(parts[1], False)
+                except AttributeError:
+                    #IF we are the player
+                    pass
+            else:
+                print "not known message %s", body
 
         channel.basic_consume(callback,
                               queue=queue_name,

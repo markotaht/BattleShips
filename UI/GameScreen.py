@@ -22,6 +22,8 @@ class GameScreen:
         #Turn = Player whose turn it actually is
         self.turnPlayer = "__me__"
 
+
+
         self.tinyFont = tinyFont
         self.smallFont = smallFont
         self.mediumFont = mediumFont
@@ -50,7 +52,12 @@ class GameScreen:
         for player in self.playerReady:
             ready = self.playerReady[player]
 
-            playerText = self.mediumFont.render(turnStr, True, COLOR_BLACK)
+            if ready:
+                color = COLOR_GREEN
+            else:
+                color = COLOR_RED
+            playerText = self.mediumFont.render(player, True, color)
+
             playerTextRect = playerText.get_rect()
             playerTextRect.left = 20
             playerTextRect.top = y
@@ -133,3 +140,8 @@ class GameScreen:
     # Player should be a string, "__me__" if local player's turn
     def setTurnPlayer(self, player):
         self.turnPlayer = player
+
+    #Marks player as ready
+    #TODO this is also used when player joins game, better use addPlayer?
+    def addReadyPlayer(self, player, ready):
+        self.playerReady[player] = ready
