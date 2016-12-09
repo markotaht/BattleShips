@@ -28,7 +28,16 @@ class SetupShipsScreen:
         self._placedShips = []
         self._verticalPlacement = True
 
-        if self.boardWidth == 8:
+        if self.boardWidth == 4:
+            self._selectedSize = 2
+            self._availableShips.append([2, 2]);
+            self._availableShips.append([1, 2]);
+        elif self.boardWidth == 6:
+            self._selectedSize = 3
+            self._availableShips.append([3, 1]);
+            self._availableShips.append([2, 1]);
+            self._availableShips.append([1, 2]);
+        elif self.boardWidth == 8:
             self._selectedSize = 4
             self._availableShips.append([4, 1]);
             self._availableShips.append([3, 1]);
@@ -122,8 +131,22 @@ class SetupShipsScreen:
                 print "Ships placed"
                 #TODO: pass self._placedShips
                 #TODO correction: After every ship is placed info needs to be given to server
-                #self.client.finishedPlacing("ME") Once all done send this
-                self.client.loadGameScreen(self.board)
+
+                placedShips = ""
+                for ship in self._placedShips:
+                    placedShips += str(ship[0]) + ";" + str(ship[1]) + ";" + str(ship[2]) + ";" + str(ship[3]) + "|"
+
+                #Remove extra | from end
+                placedShips = placedShips[:-1]
+
+                response = self.client.finishedPlacing(self.client.username, placedShips)
+                print "Response: %s" % response
+
+                if(response.startswith("FAIL") == False):
+                    self.client.loadGameScreen(self.board)
+                else:
+                    print "Server rejected ship placement."
+
 
         self.board.update(events)
 
@@ -154,7 +177,7 @@ class SetupShipsScreen:
     def tryPlaceShip(self, tileX, tileY):
         #TODO: Also check surroundings for conflicting ships
         shipSize = self._selectedSize
-        if self._verticalPlacement:
+        if self._verticalPlacement == False:
             if tileX > self.boardWidth - shipSize:
                 #The ship would be out of bounds
                 return False

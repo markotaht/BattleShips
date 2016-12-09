@@ -6,12 +6,15 @@ from collections import defaultdict
 
 class GameScreen:
 
-    def init(self, client, windowSurface, board):
+    def init(self, client, windowSurface, board, isHost, isGameStarted):
         self.client = client
         self.windowSurface = windowSurface
         self.boardWidth = board.boardWidth
         self.boards = defaultdict(Board)
+        self.isGameStarted = isGameStarted;
+        self.isHost = isHost
         self.boards["__me__"] = board
+        self.playerReady = {}
         board.parent = self
         #Active = Player whose board is being shown
         self.activePlayer = "__me__"
@@ -24,31 +27,37 @@ class GameScreen:
         self.mediumFont = mediumFont
         self.largeFont = largeFont
 
-        #Add other players for debugging
-        board2 = Board()
-        board2.init(windowSurface, self.boardWidth, self)
-        board2.setTileByIndex(2, 2, TILE_MISS)
-        self.addPlayer("Jaanus", board2)
-        board3 = Board()
-        board3.init(windowSurface, self.boardWidth, self)
-        board3.setTileByIndex(2, 4, TILE_SHIP_HIT)
-        self.addPlayer("Vambola", board3)
-
-
     def update(self, events):
         #if escapePressed(events):
             #TODO: Handle
 
-        if self.turnPlayer == "__me__":
-            turnStr = "Your turn"
+        if self.isGameStarted == False:
+            turnStr = "Waiting for players..."
         else:
-            turnStr = self.turnPlayer + "'s turn"
+            if self.turnPlayer == "__me__":
+                turnStr = "Your turn"
+            else:
+                turnStr = self.turnPlayer + "'s turn"
 
         turnText = self.mediumFont.render(turnStr, True, COLOR_BLACK)
         turnTextRect = turnText.get_rect()
         turnTextRect.left = 10
         turnTextRect.top = 10
         self.windowSurface.blit(turnText, turnTextRect)
+
+        y = 100
+        #Player list - WIP
+        for player in self.playerReady:
+            ready = self.playerReady[player]
+
+            playerText = self.mediumFont.render(turnStr, True, COLOR_BLACK)
+            playerTextRect = playerText.get_rect()
+            playerTextRect.left = 20
+            playerTextRect.top = y
+            y += 50
+            self.windowSurface.blit(playerText, playerTextRect)
+
+
 
         #Navigating between boards
         previousText = self.largeFont.render(" < ", True, COLOR_WHITE, COLOR_BLACK)
@@ -82,7 +91,6 @@ class GameScreen:
 
 
     def previousBoard(self):
-        print "PREV BOARD"
         #Returns a list of tuples (playerName, board)
         otherPlayers = self.boards.items()
 
@@ -95,7 +103,6 @@ class GameScreen:
                 break
 
     def nextBoard(self):
-        print "NEXT BOARD"
         #Returns a list of tuples (playerName, board)
         otherPlayers = self.boards.items()
 
@@ -115,11 +122,11 @@ class GameScreen:
 
     def addPlayer(self, name, board):
         self.boards[name] = board
+        #TODO: Update this value properly
+        self.playerReady[name] = False
 
     # Player should be a string, "__me__" for local player
     def setActivePlayer(self, player):
-        print "Setting " + player
-        print "Board is " + str(self.boards[player])
         self.activePlayer = player
         self.activeBoard = self.boards[player]
 

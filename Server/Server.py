@@ -14,8 +14,8 @@ class Server():
         self.initListeners()
 
         #Create a session for faster debugging
-        self.createSessionCallback("Test Session:8:MockUser")
-        self.createSessionCallback("Test Session2:12:MockUser")
+        self.createSessionCallback("Test Session:4:MockUser")
+        self.createSessionCallback("Test Session2:8:MockUser")
 
 
     def initListeners(self):
@@ -35,17 +35,31 @@ class Server():
         self.getSessions.start()
 
     #Called when user is attempting to join a session
-    def joinSessionCallback(self,request):
+    def joinSessionCallback(self, request):
         print(" [.] joinSession(%s)" % request)
-        n,user = request.split(":")
+        sessionName,username = request.split(":")
 
         try:
-            self.sessions[n].addPlayer(user)
+            session = self.sessions[sessionName]
         except KeyError:
-            return "FAIL:"+n, ""
+            # First argument is sent to only the sender. The second one is broadcasted globally.
+            print("Invalid sessionName provided by %s" % username)
+            return "FAIL:"+sessionName, ""
 
-        #First argument is sent to only the sender. The second one is broadcasted globally.
-        return "JOINED:"+n, ""
+        session.addPlayer(username)
+
+        if session.state == "INIT":
+            #Doesn't matter if rejoining. User can re-place his ships
+            #TODO: Handle case where user placed ships, game is still in INIT but user rejoined
+            print("Allowing %s to join." % username)
+            return "WELCOME:" + sessionName, ""
+        else:
+            if username in session.players:
+                print("Allowing %s to rejoin." % username)
+                return "WELCOMEBACK:"+sessionName, ""
+            else:
+                print("Rejecting %s joining. Game already started." % username)
+                return "FAIL:"+sessionName, ""
 
     # Called when user is attempting to create a new session
     def createSessionCallback(self, request):
@@ -70,7 +84,7 @@ class Server():
         keyCount = len(self.sessions.keys())
         for i in range(0, keyCount):
             session = self.sessions[self.sessions.keys()[i]]
-            response += self.sessions.keys()[i] + ":"  + str(session.boardWidth) + ":" + str(len(session.players))
+            response += self.sessions.keys()[i] + ":"  + str(session.boardWidth) + ":" + str(len(session.players)) + ":" + session.state
             if i != keyCount - 1:
                 response += ":"
 

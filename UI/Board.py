@@ -3,6 +3,7 @@ from Assets import *
 from Util import *
 import re
 
+#TODO: Make shared with Session.py
 TILE_EMPTY = 0
 TILE_SHIP = 1
 TILE_MISS = 2

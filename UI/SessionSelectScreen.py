@@ -15,7 +15,7 @@ class SessionSelectScreen:
         self.largeFont = largeFont
 
         #SESSIONS LIST
-        #Contains 3 element arrays - [name:string, boardSize:int, playerCount:int]
+        #Contains 4 element arrays - [name:string, boardSize:int, playerCount:int, state:string]
         self._sessions = []
         self._refreshSessions()
 
@@ -68,6 +68,7 @@ class SessionSelectScreen:
             name = session[0]
             boardSize = session[1]
             playerCount = session[2]
+            state = session[3]
 
             nameText = self.smallFont.render(name, True, COLOR_BLACK)
             nameTextRect = nameText.get_rect()
@@ -76,7 +77,7 @@ class SessionSelectScreen:
 
             #Contains the other 3 fields
             otherText = self.smallFont.render(str(boardSize)
-                        + "x" + str(boardSize) + "        " + str(playerCount)
+                        + "x" + str(boardSize) + "        " + str(playerCount) + "         " + state
                         + " players", True, COLOR_BLACK)
             otherTextRect = otherText.get_rect()
             otherTextRect.right = 460
@@ -92,19 +93,30 @@ class SessionSelectScreen:
                     print "Clicked on " + name + " session"
                     #TODO: Determine if the user is reconnecting and has a previous state
                     self.client.sessionName = name
-                    self.client.joinSession(name, self.client.username)
+                    response = self.client.joinSession(name, self.client.username)
 
-                    self.client.loadSetupShipsScreen(boardSize)
+                    print "Server responded with %s" % response
+
+                    if(response.startswith("FAIL") == False):
+                        self.client.loadSetupShipsScreen(boardSize)
+                    else:
+                        print("Unable to join the session")
+
 
 
     def _refreshSessions(self):
         data = self.client.getSessions("").split(":")
         self._sessions = []
-        for i in range(0, len(data), 3):
+        for i in range(0, len(data), 4):
             name = data[i]
             boardWidth = int(data[i + 1])
             players = data[i + 2]
-            self._addSession(name, boardWidth, players)
+            state = data[i + 3]
+            self._addSession(name, boardWidth, players, state)
 
-    def _addSession(self, name, boardSize, playerCount):
-        self._sessions.append([name, boardSize, playerCount]);
+    def _addSession(self, name, boardSize, playerCount, state):
+        if state == "INIT":
+            state = "Setup"
+        elif state == "PLAY":
+            state = "Playing"
+        self._sessions.append([name, boardSize, playerCount, state]);

@@ -14,7 +14,7 @@ class NewSessionScreen:
         self.mediumFont = mediumFont
         self.largeFont = largeFont
 
-        self._availableSizes = [8, 10, 12]
+        self._availableSizes = [4, 6, 8, 10, 12]
 
 
     def update(self, events):
