@@ -1,127 +1,121 @@
-import pika
-import uuid
-import threading
+import pygame, sys, pika, uuid, threading
+from UI.MainMenuScreen import *
+from UI.SessionSelectScreen import *
+from UI.SetupShipsScreen import *
+from UI.NewSessionScreen import *
+from UI.GameScreen import *
+from UI.Assets import *
+
 
 from types import MethodType
 
-class BattleShipsClient(object):
+class Client(object):
     def __init__(self):
-        self.serverList = ["North WU","Always offline"]
-        self.server = self.serverList[0]
-        self.room = ""
-        self.roomprefix = ""
+        # set up pygame
+        pygame.init()
+        # set up the pygame window
+        self.windowSurface = pygame.display.set_mode((640, 480), 0, 32)
+        self.windowSurface.fill(COLOR_WHITE)
+        pygame.display.set_caption('Naval Warfare Simulator')
 
-        self.username = "Testing"
+        #Username field
+        self.name = "DefaultName"
+
+        self.loadMainMenuScreen()
+
         self.state = "INIT"
 
-    def connect(self):
+        #Start the main loop
+        self.run();
+
+    def run(self):
+        clock = pygame.time.Clock()
+        #Game loop
+        while True:
+            # Ensure max 30 fps
+            clock.tick(30)
+            #Process quitting
+            events = pygame.event.get()
+            for event in events:
+                if event.type == QUIT:
+                    sys.exit()
+            # Clear the screen
+            self.windowSurface.fill(COLOR_WHITE)
+            #Update whatever screen we are on
+            self.screen.update(events)
+            # refresh the screen
+            pygame.display.flip()
+
+    def loadMainMenuScreen(self):
+        self.screen = MainMenuScreen()
+        self.screen.init(self, self.windowSurface)
+        #TODO: remove later
+        #This is hardcoded and has also to be the same in Server.py for it to work
+        self.screen.addServer('Hardcoded localhost server', 'localhost')
+
+    def loadNewSessionScreen(self):
+        self.screen = NewSessionScreen()
+        self.screen.init(self, self.windowSurface)
+
+    def loadSessionSelectScreen(self):
+        self.screen = SessionSelectScreen()
+        self.screen.init(self, self.windowSurface)
+
+    def loadSetupShipsScreen(self, boardSize):
+        self.screen = SetupShipsScreen()
+        self.screen.init(self, self.windowSurface, boardSize)
+
+    #Board should contain your placed ships
+    def loadGameScreen(self, board):
+        self.screen = GameScreen()
+        self.screen.init(self, self.windowSurface, board)
+
+
+    def connect(self, serverName, mqAddress):
+        print "Connecting to " + serverName + " " + mqAddress
+        self.serverName = serverName
+        self.mqAddress = mqAddress
         self.asyncConnection = pika.BlockingConnection(pika.ConnectionParameters(
-            host='localhost'))
+            host=mqAddress))
 
         self.syncConnection = pika.BlockingConnection(pika.ConnectionParameters(
-            host='localhost'))
+            host=mqAddress))
 
-        #TODO get Server name from UI
-        #self.server = server
         self.initServerListeners()
 
+        #TODO: Also apss self.username somehow and wait for verified response
+
+        #TODO: Check if connection was successful and return false if not
+        return True
+
     def initlisteners(self):
-        self.roomprefix = self.server + "." + self.room
+        self.sessionIdentifier = self.serverName + "." + self.sessionName
         self.asynclistener = threading.Thread(target=self.listenForUpdates, args=(self.asyncConnection,))
         self.asynclistener.start()
-        self.finishedPlacing = MethodType(self.createFunction(self.roomprefix, 'rpc_finished_placing'), self,
-                                   BattleShipsClient)
 
-        self.placeShip = MethodType(self.createFunction(self.roomprefix, 'rpc_place_ship'), self,
-                                          BattleShipsClient)
+        self.finishedPlacing = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_finished_placing'), self, Client)
+        self.placeShip = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_place_ship'), self, Client)
+        self.bomb = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_bomb'), self, Client)
+        self.startGame = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_start'), self, Client)
 
-        self.bomb = MethodType(self.createFunction(self.roomprefix, 'rpc_bomb'), self,
-                                          BattleShipsClient)
-
-        self.startGame = MethodType(self.createFunction(self.roomprefix, 'rpc_start'), self,
-                                          BattleShipsClient)
-
-        """
-        self.placeShipConnecion = pika.BlockingConnection(pika.ConnectionParameters(
-                host='localhost'))
-
-        self.placeShipChannel = self.placeShipConnecion.channel()
-
-        result = self.placeShipChannel.queue_declare(exclusive=True)
-        self.callback_queue = result.method.queue
-
-        self.placeShipChannel.basic_consume(self.on_response, no_ack=True,
-                                   queue=self.callback_queue)
-        self.bombShipConnection = pika.BlockingConnection(pika.ConnectionParameters(
-            host='localhost'))
-
-        self.bombShipChannel = self.bombShipConnection.channel()
-
-        result = self.bombShipChannel.queue_declare(exclusive=True)
-        self.callback_queue2 = result.method.queue
-
-        self.bombShipChannel.basic_consume(self.on_response, no_ack=True,
-                                           queue=self.callback_queue2)
-
-        self.startGameConnection = pika.BlockingConnection(pika.ConnectionParameters(
-            host='localhost'))
-
-        self.startGameChannel = self.startGameConnection.channel()
-
-        result = self.startGameChannel.queue_declare(exclusive=True)
-        self.callback_queue5 = result.method.queue
-
-        self.startGameChannel.basic_consume(self.on_response, no_ack=True,
-                                           queue=self.callback_queue5)
-
-
-        self.finishedPlacingConnection = pika.BlockingConnection(pika.ConnectionParameters(
-            host='localhost'))
-
-        self.finishedPlacingChannel = self.finishedPlacingConnection.channel()
-
-        result = self.finishedPlacingChannel.queue_declare(exclusive=True)
-        self.callback_queue6 = result.method.queue
-
-        self.finishedPlacingChannel.basic_consume(self.on_response, no_ack=True,
-                                            queue=self.callback_queue6)
-        """
 
     def initServerListeners(self):
-        self.createRoom = MethodType(self.createFunction(self.server,'rpc_createSession',True),self,BattleShipsClient)
-        self.joinRoom = MethodType(self.createFunction(self.server, 'rpc_joinSession', True), self,
-                                     BattleShipsClient)
-        self.getRooms = MethodType(self.createFunction(self.server, 'rpc_getRooms'), self,
-                                     BattleShipsClient)
-        """
-        self.createRoomChannel = self.syncConnection.channel()
+        self.createSession = MethodType(self.createFunction(self.serverName, 'rpc_createSession',True),self, Client)
+        self.joinSession = MethodType(self.createFunction(self.serverName, 'rpc_joinSession', True), self, Client)
+        self.getSessions = MethodType(self.createFunction(self.serverName, 'rpc_getSessions'), self, Client)
 
-        result = self.createRoomChannel.queue_declare(exclusive=True)
-        self.callback_queue3 = result.method.queue
-
-        self.createRoomChannel.basic_consume(self.on_response, no_ack=True,
-                                           queue=self.callback_queue3)
-
-        self.joinRoomChannel = self.syncConnection.channel()
-
-        result = self.joinRoomChannel.queue_declare(exclusive=True)
-        self.callback_queue4 = result.method.queue
-
-        self.joinRoomChannel.basic_consume(self.on_response, no_ack=True,
-                                             queue=self.callback_queue4)
-        """
 
     #Stuff for asynccalls
-    def listenForUpdates(self,connection):
+    def listenForUpdates(self, connection):
         channel = connection.channel()
 
-        channel.exchange_declare(exchange=self.roomprefix + 'updates',
+        channel.exchange_declare(exchange=self.sessionIdentifier + 'updates',
                                  type='fanout')
 
         result = channel.queue_declare(exclusive=True)
         queue_name = result.method.queue
 
-        channel.queue_bind(exchange=self.roomprefix+'updates',
+        channel.queue_bind(exchange=self.sessionIdentifier + 'updates',
                            queue=queue_name)
 
         print(' [*] Waiting for updates. To exit press CTRL+C')
@@ -137,9 +131,9 @@ class BattleShipsClient(object):
                 print body
             elif parts[0] == "NEXT":
                 if parts[1] == self.username:
-                    print "YAY minu kaik"
+                    print "My turn"
                 else:
-                    print "Peab veel ootama"
+                    print "Not my turn yet"
 
         channel.basic_consume(callback,
                               queue=queue_name,
@@ -276,26 +270,37 @@ class BattleShipsClient(object):
         self.initlisteners()
         return self.response
 """
-#fibonacci_rpc = BattleShipsClient()
 
-print(" [x] Requesting place")
-#response = fibonacci_rpc.placeShip(0,0,orient,"ME")
-#print(" [.] Got %r" % response)
-print(" [x] Requesting bomb")
-#response = fibonacci_rpc.bomb(0,0,"target","ME")
-#print(" [.] Got %r" % response)
-print(" [x] Requesting room")
-#response = fibonacci_rpc.createRoom("Test","ME")
-#print(" [.] Got %r" % response)
-print(" [x] Joining room")
-#response = fibonacci_rpc.joinRoom("Test","ME")
-#print(" [.] Got %r" % response)
-print(" [x] startgaem room")
-#response = fibonacci_rpc.startGame()
-#print(" [.] Got %r" % response)
-print(" [x] finish shipping room")
-#response = fibonacci_rpc.finishedPlacing("ME")
-#print(" [.] Got %r" % response)
-print(" [x] Get rooms")
-#response = fibonacci_rpc.getRooms("")
-#print(" [.] Got %r" % response)
+#Run the client when class is entry point
+if __name__ == "__main__":
+    client = Client()
+
+    #TODO: Old tests that don't currently run anymore, fix them
+
+    #print(" [x] Requesting place")
+    #response = client.placeShip(0, 0, orient, "ME")
+    #print(" [.] Got %r" % response)
+    #
+    # print(" [x] Requesting bomb")
+    # response = client.bomb(0, 0, "target", "ME")
+    #
+    # print(" [.] Got %r" % response)
+    # print(" [x] Requesting session")
+    # response = client.createSession("Test", "ME")
+    #
+    # print(" [.] Got %r" % response)
+    # print(" [x] Joining room")
+    # response = client.joinSession("Test", "ME")
+    #
+    # print(" [.] Got %r" % response)
+    # print(" [x] startgame session")
+    # response = client.startGame()
+    #
+    # print(" [.] Got %r" % response)
+    # print(" [x] finish shipping room")
+    # response = client.finishedPlacing("ME")
+    # print(" [.] Got %r" % response)
+    #
+    # print(" [x] Get sessions")
+    # response = client.getSessions("")
+    # print(" [.] Got %r" % response)

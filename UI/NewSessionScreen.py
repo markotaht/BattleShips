@@ -1,12 +1,12 @@
 from Assets import *
 from Util import *
+import random
 from external import eztext
-
 
 class NewSessionScreen:
 
-    def init(self, ui, windowSurface):
-        self.ui = ui
+    def init(self, client, windowSurface):
+        self.client = client
         self.windowSurface = windowSurface
 
         self.tinyFont = tinyFont
@@ -20,7 +20,7 @@ class NewSessionScreen:
     def update(self, events):
 
         if escapePressed(events):
-            self.ui.loadSessionSelectScreen()
+            self.client.loadSessionSelectScreen()
 
         #NEW SESSION
         newSessionText = self.largeFont.render("Creating a new session", True, COLOR_BLACK)
@@ -48,7 +48,10 @@ class NewSessionScreen:
 
             if clickedOnRect(sizeRect, events):
                 print "Clicked on " + str(size) + " size"
-                self.ui.client.createRoom("RoomName","boardwidth","boardheight","Username")
-                # TODO: Create new session with the given size
-                self.ui.loadSetupShipsScreen(size)
-
+                sessionName = "Session " + str(random.randrange(0, 100000000))
+                self.client.sessionName = sessionName
+                success = self.client.createSession(sessionName, size, self.client.username)
+                if(success):
+                    self.client.loadSetupShipsScreen(size)
+                else:
+                    print "Something went wrong creating a session."

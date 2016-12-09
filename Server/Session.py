@@ -5,8 +5,8 @@ import time
 from commons import createRPCListener
 from types import MethodType
 
-class BattleShipsSession(threading.Thread):
-    def __init__(self, server, name,width,height):
+class Session(threading.Thread):
+    def __init__(self, server, name, boardWidth):
         threading.Thread.__init__(self)
         self.server = server
         self.name = name
@@ -17,24 +17,23 @@ class BattleShipsSession(threading.Thread):
 
         self.players = {}
         self.order = []
-        self.fieldSize = (width,height)
-        self.fields = {}
+        self.boardWidth = boardWidth
+        self.boards = {}
         self.dead = []
         self.state = "INIT"
         self.playerturn = 0
         self.shots = 0
 
+        self.initChannels()
+
     def addPlayer(self, name):
         with self.lock:
             self.players[name] = time.time()
-            self.fields[name] = [[0 for i in range(self.fieldSize[1])] for j in range(self.fieldSize[0])]
+            self.boards[name] = [[0 for i in range(self.boardWidth)] for j in range(self.boardWidth)]
             self.order.append(name)
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                              routing_key='',
                                              body="%s joined the game"%name)
-
-    def run(self):
-        self.initChannels()
 
     def initChannels(self):
         with self.lock:
@@ -49,16 +48,16 @@ class BattleShipsSession(threading.Thread):
             self.finishedplacing = threading.Thread(target=self.finishedPlacingListener, args=(self.finishedPlacing,))
             """
 
-            self.placeShipListener = MethodType(createRPCListener(self,'rpc_place_ship',self.placeShipCallback), self, BattleShipsSession)
+            self.placeShipListener = MethodType(createRPCListener(self,'rpc_place_ship',self.placeShipCallback), self, Session)
             self.placeship = threading.Thread(target=self.placeShipListener)
 
-            self.bombShipListener = MethodType(createRPCListener(self,'rpc_bomb',self.bombShipCallback), self, BattleShipsSession)
+            self.bombShipListener = MethodType(createRPCListener(self,'rpc_bomb',self.bombShipCallback), self, Session)
             self.bombship = threading.Thread(target=self.bombShipListener)
 
-            self.gameStartListener = MethodType(createRPCListener(self,'rpc_start',self.gameStartCallback), self, BattleShipsSession)
+            self.gameStartListener = MethodType(createRPCListener(self,'rpc_start',self.gameStartCallback), self, Session)
             self.gamestart = threading.Thread(target=self.gameStartListener)
 
-            self.finishedPlaceingListener = MethodType(createRPCListener(self,'rpc_finished_placing',self.finishedPlacingCallback), self, BattleShipsSession)
+            self.finishedPlaceingListener = MethodType(createRPCListener(self,'rpc_finished_placing',self.finishedPlacingCallback), self, Session)
             self.finishedPlacing = threading.Thread(target=self.finishedPlaceingListener)
 
             self.placeship.start()

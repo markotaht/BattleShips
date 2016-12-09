@@ -5,8 +5,8 @@ from external import eztext
 
 class MainMenuScreen:
 
-    def init(self, ui, windowSurface):
-        self.ui = ui
+    def init(self, client, windowSurface):
+        self.client = client
         self.windowSurface = windowSurface
 
         self.tinyFont = tinyFont
@@ -32,7 +32,7 @@ class MainMenuScreen:
         y += 50
 
         #SERVER LIST
-        #Contains 2 element arrays - [ip:string, port:int]
+        #Contains 2 element arrays - [name:string, MQaddress:string]
         self._servers = []
 
         self._serversTitleText = self.mediumFont.render('Available servers (Click to join):', True, COLOR_BLACK)
@@ -60,7 +60,7 @@ class MainMenuScreen:
             print(value)
             self._nameTextBox.focus = False
             self._nameTextBox.color = COLOR_BLACK
-            self.ui.name = value;
+            self.client.username = value;
 
         # Blink every 500ms at 30FPS
         if self._nameTextBox.focus and self.updateCounter % 15 == 0:
@@ -79,16 +79,16 @@ class MainMenuScreen:
                     #User did click somewhere but it's not on the name box - remove focus from it
                     if hasattr(self, 'name') == False:
                         if(len(self._nameTextBox.value) > 0):
-                            self.ui.name = self._nameTextBox.value
+                            self.client.username = self._nameTextBox.value
                         else:
-                            self.ui.name = "Default"
+                            self.client.username = "Default"
                     self._nameTextBox.focus = False
                     self._nameTextBox.color = COLOR_BLACK
                     break
 
 
     def _updateServerList(self, events):
-        #Available servers: text
+        #Available servers text
         self.windowSurface.blit(self._serversTitleText, self._serversTitleTextRect)
 
         #The servers themselves
@@ -102,9 +102,9 @@ class MainMenuScreen:
 
         self._serverTexts = []
         for server in servers:
-            ip = server[0]
-            port = server[1]
-            serverText = self.smallFont.render(ip + ":" + str(port), True, COLOR_BLACK)
+            serverName = server[0]
+            serverAddress = server[1]
+            serverText = self.smallFont.render(serverName + " (" + serverAddress + ")", True, COLOR_BLACK)
             serverTextRect = serverText.get_rect()
             serverTextRect.left = 70
             serverTextRect.centery = y
@@ -113,20 +113,21 @@ class MainMenuScreen:
             serverButtonRect = self.windowSurface.blit(serverText, serverTextRect)
 
             if clickedOnRect(serverButtonRect, events):
-                if self.ui.name == "__me__":
+                if self.client.username == "__me__":
                     #Not allowed name
-                    self.ui.name = "DefaultName"
+                    self.client.username = "DefaultName"
 
-                print "Clicked on " + ip + " " + str(port) + " with name " + self.ui.name
                 #TODO: Connect and switch screens
-                #TODO: lisada siin severi nimi millega uhineda, hetkle default North WU
-                self.ui.client.connect()
-                self.ui.loadSessionSelectScreen()
+                success = self.client.connect(serverName, serverAddress)
+                if success:
+                    self.client.loadSessionSelectScreen()
+                else:
+                    print("Failed to connect to the server. Should display an error message.")
 
 
     def clearServers(self):
         self._servers = []
 
-    #IP as string, port as integer
-    def addServer(self, ip, port):
-        self._servers.append([ip, port]);
+    #name and mqAddress both expected to be strings
+    def addServer(self, name, mqAddress):
+        self._servers.append([name, mqAddress]);

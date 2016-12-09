@@ -5,8 +5,8 @@ from Board import *
 
 class SetupShipsScreen:
 
-    def init(self, ui, windowSurface, boardWidth):
-        self.ui = ui
+    def init(self, client, windowSurface, boardWidth):
+        self.client = client
         self.windowSurface = windowSurface
         self.boardWidth = boardWidth
 
@@ -122,8 +122,8 @@ class SetupShipsScreen:
                 print "Ships placed"
                 #TODO: pass self._placedShips
                 #TODO correction: After every ship is placed info needs to be given to server
-                #self.ui.client.finishedPlacing("ME") Once all done send this
-                self.ui.loadGameScreen(self.board)
+                #self.client.finishedPlacing("ME") Once all done send this
+                self.client.loadGameScreen(self.board)
 
         self.board.update(events)
 
@@ -148,7 +148,7 @@ class SetupShipsScreen:
 
             self._placedShips.append([tileX, tileY, self._verticalPlacement, self._selectedSize])
             #Siin vist lisada
-            #self.ui.client.placeShip(x,y,dir,"ME")
+            #self.client.placeShip(x,y,dir,"ME")
 
 
     def tryPlaceShip(self, tileX, tileY):

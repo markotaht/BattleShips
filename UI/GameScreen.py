@@ -6,8 +6,8 @@ from collections import defaultdict
 
 class GameScreen:
 
-    def init(self, ui, windowSurface, board):
-        self.ui = ui
+    def init(self, client, windowSurface, board):
+        self.client = client
         self.windowSurface = windowSurface
         self.boardWidth = board.boardWidth
         self.boards = defaultdict(Board)
