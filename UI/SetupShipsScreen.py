@@ -5,11 +5,11 @@ from Board import *
 
 class SetupShipsScreen:
 
-    def init(self, client, windowSurface, boardWidth):
+    def init(self, client, windowSurface, boardWidth, isHost):
         self.client = client
         self.windowSurface = windowSurface
         self.boardWidth = boardWidth
-
+        self.isHost = isHost
         self.tinyFont = tinyFont
         self.smallFont = smallFont
         self.mediumFont = mediumFont
@@ -144,7 +144,7 @@ class SetupShipsScreen:
                 print "Response: %s" % response
 
                 if(response.startswith("FAIL") == False):
-                    self.client.loadGameScreen(self.board)
+                    self.client.loadGameScreen(self.board, self.isHost)
                 else:
                     print "Server rejected ship placement."
 

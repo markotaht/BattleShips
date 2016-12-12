@@ -72,19 +72,18 @@ class Client(object):
         self.screen = SessionSelectScreen()
         self.screen.init(self, self.windowSurface)
 
-    def loadSetupShipsScreen(self, boardSize):
+    def loadSetupShipsScreen(self, boardSize, isHost):
         self.screen = SetupShipsScreen()
-        self.screen.init(self, self.windowSurface, boardSize)
+        self.screen.init(self, self.windowSurface, boardSize, isHost)
 
     #Board should contain your placed ships
-    def loadGameScreen(self, board):
+    def loadGameScreen(self, board, isHost):
+        # NOTE: This expects the current screen to be setupships screen when called
         playerReady = self.screen.playerReady
         self.screen = GameScreen()
         #TODO: Implement correct arguments depending on scenario
-        isHost = True
         isGameStarted = False
 
-        #NOTE: This expects the current screen to be setupships screen when called
         self.screen.init(self, self.windowSurface, board, isHost, isGameStarted, playerReady)
 
 

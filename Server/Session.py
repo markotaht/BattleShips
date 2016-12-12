@@ -33,6 +33,7 @@ class Session(threading.Thread):
 
     def addPlayer(self, name):
         with self.lock:
+            #TODO: Comment back in once we have proper disconnect handling
             #if name in self.players:
             #    return False
             #else:
