@@ -161,7 +161,7 @@ class Client(object):
                     else:
                         print "Not my turn yet"
                 elif parts[0] == "READY":
-                    print "Player %s is ready"%parts[1]
+                    print "Client - Player %s is ready"%parts[1]
                     try:
                         self.screen.addReadyPlayer(parts[1], True)
                     except AttributeError:
@@ -190,7 +190,7 @@ class Client(object):
         except ChannelClosed:
             print "ChannelClosed exception"
         except KeyError:
-            print "KeyError with", connection
+            print "KeyError caught"
         except AssertionError:
             print "Assertion Error"
         except Exception :

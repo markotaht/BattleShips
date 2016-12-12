@@ -20,7 +20,7 @@ class GameScreen:
         self.activePlayer = self.client.username
         self.activeBoard = self.boards[self.client.username]
         #Turn = Player whose turn it actually is
-        self.turnPlayer = self.client.username
+        self.turnPlayer = self.client.username if self.isHost else "not you"
 
         #Create boards for the existing players
         for player in playerReady.keys():
@@ -120,7 +120,7 @@ class GameScreen:
         if clickedOnRect(nextRect, events):
             self.nextBoard()
 
-        if self.activePlayer == "__me__":
+        if self.activePlayer == self.client.username:
             currentBoardStr = "Your board"
         else:
             currentBoardStr = self.activePlayer + "'s board"
@@ -169,12 +169,13 @@ class GameScreen:
         # game logic
         # my turn
         if self.isGameStarted:
-            if self.turnPlayer == "__me__":
-                request = ":".join([str(tileX),str(tileY), self.client.name, "default"])
-                #response = self.client.bomb(request)
-                print "Bomb response"
-
-        print str(tileX) + " " + str(tileY)
+            if self.turnPlayer == self.client.username:
+                if self.activePlayer != self.client.username:
+                    request = ":".join([str(tileX),str(tileY), self.client.username, "default"])
+                    #response = self.client.bomb(request)
+                    print "Bomb placeholder"
+                else:
+                    print "click on your board "+ str(tileX) + " " + str(tileY)
 
     def addPlayer(self, name, board):
         self.boards[name] = board

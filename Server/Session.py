@@ -114,7 +114,7 @@ class Session(threading.Thread):
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                              routing_key='',
                                              body="READY:%s" % name)
-            print "%s is ready"%name
+            print "Server - %s is ready"%name
             return "OK", "READY:" + name
         else:
             return "FAIL", ""
