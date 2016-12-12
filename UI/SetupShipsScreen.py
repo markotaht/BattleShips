@@ -169,6 +169,9 @@ class SetupShipsScreen:
                         self._selectedSize = 0
                     else:
                         ship[1] = shipAmount - 1
+                    if self._selectedSize == 0:
+                        if len(self._availableShips) > 0:
+                            self._selectedSize = self._availableShips[0][0]
 
             self._placedShips.append([tileX, tileY, self._verticalPlacement, self._selectedSize])
             #Siin vist lisada

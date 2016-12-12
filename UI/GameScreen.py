@@ -20,7 +20,7 @@ class GameScreen:
         self.activePlayer = "__me__"
         self.activeBoard = self.boards["__me__"]
         #Turn = Player whose turn it actually is
-        self.turnPlayer = "__me__"
+        self.turnPlayer = "__me__" if isHost else "Other"
 
 
 

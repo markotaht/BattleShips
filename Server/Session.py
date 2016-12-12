@@ -226,6 +226,7 @@ class Session(threading.Thread):
                                          body=message)
         self.playerturn = (self.playerturn+1)%len(self.order)
         self.shots = len(self.order)-1
+        print "%s's turn"%self.order[self.playerturn]
 
     def __placeShipOnField(self,x,y,dir,name):
         self.fields[name][y][x] = 1

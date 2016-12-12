@@ -9,6 +9,8 @@ from UI.Assets import *
 
 from types import MethodType
 from time import time
+from pika.exceptions import ConnectionClosed
+from pika.exceptions import ChannelClosed
 
 class Client(object):
     def __init__(self):
@@ -125,56 +127,63 @@ class Client(object):
 
     #Stuff for asynccalls
     def listenForUpdates(self, connection):
-        channel = connection.channel()
+        try:
+            channel = connection.channel()
 
-        channel.exchange_declare(exchange=self.sessionIdentifier + 'updates',
-                                 type='fanout')
 
-        result = channel.queue_declare(exclusive=True)
-        queue_name = result.method.queue
+            channel.exchange_declare(exchange=self.sessionIdentifier + 'updates',
+                                     type='fanout')
 
-        channel.queue_bind(exchange=self.sessionIdentifier + 'updates',
-                           queue=queue_name)
+            result = channel.queue_declare(exclusive=True)
+            queue_name = result.method.queue
 
-        print(' [*] Waiting for updates. To exit press CTRL+C')
+            channel.queue_bind(exchange=self.sessionIdentifier + 'updates',
+                               queue=queue_name)
 
-        def callback(ch, method, properties, body):
-            if body == "START":
-                print "Game has been started by the host!"
-                self.screen.isGameStarted = True
-                return
-            parts = body.split(":")
-            if parts[0] == "BOMB":
-                if parts[1] != "SINK" and parts[2] != self.username:
+            print(' [*] Waiting for updates. To exit press CTRL+C')
+
+            def callback(ch, method, properties, body):
+                if body == "START":
+                    print "Game has been started by the host!"
+                    self.screen.isGameStarted = True
                     return
-                print body
-            elif parts[0] == "NEXT":
-                if parts[1] == self.username:
-                    print "My turn"
+                parts = body.split(":")
+                if parts[0] == "BOMB":
+                    if parts[1] != "SINK" and parts[2] != self.username:
+                        return
+                    print body
+                elif parts[0] == "NEXT":
+                    if parts[1] == self.username:
+                        print "My turn"
+                    else:
+                        print "Not my turn yet"
+                elif parts[0] == "READY":
+                    print "Player %s is ready"%parts[1]
+                    try:
+                        self.screen.addReadyPlayer(parts[1], True)
+                    except AttributeError:
+                        #IF we are the player
+                        pass
+                elif parts[0] == "NEWPLAYER":
+                    print "%s joined the game"%parts[1]
+                    try:
+                        self.screen.addReadyPlayer(parts[1], False)
+                    except AttributeError:
+                        #IF we are the player
+                        pass
                 else:
-                    print "Not my turn yet"
-            elif parts[0] == "READY":
-                print "Player %s is ready"%parts[1]
-                try:
-                    self.screen.addReadyPlayer(parts[1], True)
-                except AttributeError:
-                    #IF we are the player
-                    pass
-            elif parts[0] == "NEWPLAYER":
-                print "%s joined the game"%parts[1]
-                try:
-                    self.screen.addReadyPlayer(parts[1], False)
-                except AttributeError:
-                    #IF we are the player
-                    pass
-            else:
-                print "not known message %s", body
+                    print "not known message %s", body
 
-        channel.basic_consume(callback,
-                              queue=queue_name,
-                              no_ack=True)
+            channel.basic_consume(callback,
+                                  queue=queue_name,
+                                  no_ack=True)
 
-        channel.start_consuming()
+            channel.start_consuming()
+        except ConnectionClosed:
+            #TODO check why these arise with keepalives
+            print "ConnectionClosed exception"
+        except ChannelClosed:
+            print "ChannelClosed exception"
 
     #Stuff for RPC/MQ
     def on_response(self, ch, method, props, body):
