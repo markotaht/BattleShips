@@ -67,11 +67,14 @@ class Client(object):
 
     #Board should contain your placed ships
     def loadGameScreen(self, board):
+        playerReady = self.screen.playerReady
         self.screen = GameScreen()
         #TODO: Implement correct arguments depending on scenario
         isHost = True
         isGameStarted = False
-        self.screen.init(self, self.windowSurface, board, isHost, isGameStarted)
+
+        #NOTE: This expects the current screen to be setupships screen when called
+        self.screen.init(self, self.windowSurface, board, isHost, isGameStarted, playerReady)
 
 
     def connect(self, serverName, mqAddress):

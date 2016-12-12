@@ -15,6 +15,7 @@ class SetupShipsScreen:
         self.mediumFont = mediumFont
         self.largeFont = largeFont
 
+        self.playerReady = {}
 
         self.clear()
 
@@ -212,3 +213,7 @@ class SetupShipsScreen:
             for i in range(tileY, tileY + shipSize):
                 self.board.setTileByIndex(tileX, i, TILE_SHIP)
         return True
+
+
+    def addReadyPlayer(self, player, ready):
+        self.playerReady[player] = ready

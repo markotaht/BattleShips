@@ -6,7 +6,7 @@ from collections import defaultdict
 
 class GameScreen:
 
-    def init(self, client, windowSurface, board, isHost, isGameStarted):
+    def init(self, client, windowSurface, board, isHost, isGameStarted, playerReady):
         self.client = client
         self.windowSurface = windowSurface
         self.boardWidth = board.boardWidth
@@ -14,7 +14,7 @@ class GameScreen:
         self.isGameStarted = isGameStarted;
         self.isHost = isHost
         self.boards["__me__"] = board
-        self.playerReady = {}
+        self.playerReady = playerReady
         board.parent = self
         #Active = Player whose board is being shown
         self.activePlayer = "__me__"
