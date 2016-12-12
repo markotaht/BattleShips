@@ -41,6 +41,7 @@ class Session(threading.Thread):
                 self.playerReady[name] = False
                 self.boards[name] = [[0 for i in range(self.boardWidth)] for j in range(self.boardWidth)]
                 self.order.append(name)
+                #TODO: This should be sent as the argument in server.py
                 self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                                  routing_key='',
                                                  body="NEWPLAYER:%s"%name)
@@ -53,7 +54,10 @@ class Session(threading.Thread):
             self.updateChannel.exchange_declare(exchange=self.prefix + 'updates',type='fanout')
             self.connections.append(self.updateConnection)
 
-            self.placeShipListener = MethodType(createRPCListener(self,'rpc_place_ship',self.placeShipCallback), self, Session)
+            self.kickPlayerListener = MethodType(createRPCListener(self, 'rpc_kick_player', self.placeShipCallback), self, Session)
+            self.kickPlayer = threading.Thread(target=self.kickPlayerListener)
+
+            self.placeShipListener = MethodType(createRPCListener(self,'rpc_place_ship',self.kickPlayerCallback), self, Session)
             self.placeship = threading.Thread(target=self.placeShipListener)
 
             self.bombShipListener = MethodType(createRPCListener(self,'rpc_bomb',self.bombShipCallback), self, Session)
@@ -65,10 +69,18 @@ class Session(threading.Thread):
             self.finishedPlacingListener = MethodType(createRPCListener(self,'rpc_finished_placing',self.finishedPlacingCallback), self, Session)
             self.finishedPlacing = threading.Thread(target=self.finishedPlacingListener)
 
+            self.kickPlayer.start()
             self.placeship.start()
             self.bombship.start()
             self.gamestart.start()
             self.finishedPlacing.start()
+
+    def kickPlayerCallback(self, request):
+        print(" [.] kickPlayer(%s)" % request)
+
+        #TODO: Kick player
+        return "", ""
+
 
     def finishedPlacingCallback(self,request):
         print( "[S] finishedPlacingCallback(%s)" % request)
@@ -207,9 +219,14 @@ class Session(threading.Thread):
 
     def gameStartCallback(self,request):
         #TODO: Possibly validate if the request sender is the host
-        print("Staring game")
+        print("Starting the game")
         if self.state == "INIT":
             self.state = "PLAY"
-            return "OK","START"
+
+            self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                             routing_key='',
+                                             body="START")
+
+            return "OK",""
         else:
             return "FAIL",""

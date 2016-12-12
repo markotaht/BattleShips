@@ -98,6 +98,7 @@ class Client(object):
         self.asynclistener = threading.Thread(target=self.listenForUpdates, args=(self.asyncConnection,))
         self.asynclistener.start()
 
+        self.kickPlayer = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_kick_player'), self, Client)
         self.finishedPlacing = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_finished_placing'), self, Client)
         self.placeShip = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_place_ship'), self, Client)
         self.bomb = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_bomb'), self, Client)
@@ -127,7 +128,8 @@ class Client(object):
 
         def callback(ch, method, properties, body):
             if body == "START":
-                self.state = "PLAY"
+                print "Game has been started by the host!"
+                self.screen.isGameStarted = True
                 return
             parts = body.split(":")
             if parts[0] == "BOMB":

@@ -85,13 +85,18 @@ class Server():
     def createSessionCallback(self, request):
         print(" [.] createSession(%s)" % request)
         try:
-            sessionName, boardSize, user = request.split(":")
+            sessionName, boardSize, username = request.split(":")
         except ValueError:
             return "FAIL", ""
 
         session = Session(self.name, sessionName, int(boardSize))
         self.sessions[sessionName] = session
-        session.addPlayer(user)
+
+        if self.host == None:
+            #Set the first joining player as host
+            self.host = username
+
+        session.addPlayer(username)
         response = "CREATED:" + sessionName
 
         # First argument is sent to only the sender. The second one is broadcasted globally.
