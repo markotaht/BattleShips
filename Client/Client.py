@@ -22,7 +22,7 @@ class Client(object):
         pygame.display.set_caption('Naval Warfare Simulator')
 
         #Username field
-        self.name = "DefaultName"
+        self.username = "DefaultName"
 
         self.loadMainMenuScreen()
 

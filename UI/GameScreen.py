@@ -13,16 +13,21 @@ class GameScreen:
         self.boards = defaultdict(Board)
         self.isGameStarted = isGameStarted;
         self.isHost = isHost
-        self.boards["__me__"] = board
+        self.boards[self.client.username] = board
         self.playerReady = playerReady
         board.parent = self
         #Active = Player whose board is being shown
-        self.activePlayer = "__me__" if isHost else "Other"
-        self.activeBoard = self.boards["__me__"]
+        self.activePlayer = self.client.username
+        self.activeBoard = self.boards[self.client.username]
         #Turn = Player whose turn it actually is
-        self.turnPlayer = "__me__" if isHost else "Other"
+        self.turnPlayer = self.client.username
 
-
+        #Create boards for the existing players
+        for player in playerReady.keys():
+            print "Adding a board for " + player
+            playerBoard = Board()
+            playerBoard.init(windowSurface, board.boardWidth, self)
+            self.boards[player] = playerBoard
 
         self.tinyFont = tinyFont
         self.smallFont = smallFont
@@ -36,7 +41,7 @@ class GameScreen:
         if self.isGameStarted == False:
             turnStr = "Waiting for players..."
         else:
-            if self.turnPlayer == "__me__":
+            if self.turnPlayer == self.client.username:
                 turnStr = "Your turn"
             else:
                 turnStr = self.turnPlayer + "'s turn"
@@ -82,7 +87,7 @@ class GameScreen:
             y += 40
             self.windowSurface.blit(playerText, playerTextRect)
 
-        if everyoneReady and self.isHost:
+        if everyoneReady and self.isHost and len(self.boards) > 1:
             #
             if not self.isGameStarted:
                 startGameText = self.mediumFont.render("Start game", True, COLOR_WHITE, COLOR_BLACK)
@@ -134,26 +139,26 @@ class GameScreen:
 
     def previousBoard(self):
         #Returns a list of tuples (playerName, board)
-        otherPlayers = self.boards.items()
+        players = self.boards.items()
 
-        for i in range(0, len(otherPlayers)):
-            if otherPlayers[i][0] == self.activePlayer:
+        for i in range(0, len(players)):
+            if players[i][0] == self.activePlayer:
                 if i > 0:
-                    self.setActivePlayer(otherPlayers[i - 1][0])
+                    self.setActivePlayer(players[i - 1][0])
                 else:
-                    self.setActivePlayer(otherPlayers[len(otherPlayers) - 1][0])
+                    self.setActivePlayer(players[len(players) - 1][0])
                 break
 
     def nextBoard(self):
         #Returns a list of tuples (playerName, board)
-        otherPlayers = self.boards.items()
+        players = self.boards.items()
 
-        for i in range(0, len(otherPlayers)):
-            if otherPlayers[i][0] == self.activePlayer:
-                if i + 1 < len(otherPlayers):
-                    self.setActivePlayer(otherPlayers[i + 1][0])
+        for i in range(0, len(players)):
+            if players[i][0] == self.activePlayer:
+                if i + 1 < len(players):
+                    self.setActivePlayer(players[i + 1][0])
                 else:
-                    self.setActivePlayer(otherPlayers[0][0])
+                    self.setActivePlayer(players[0][0])
                 break
 
     #Called by the board whenever there's a click
@@ -189,3 +194,9 @@ class GameScreen:
     #TODO this is also used when player joins game, better use addPlayer?
     def addReadyPlayer(self, player, ready):
         self.playerReady[player] = ready
+
+        if player in self.boards == False:
+            print "Adding a board for " + player
+            playerBoard = Board()
+            playerBoard.init(self.windowSurface, self.board.boardWidth, self)
+            self.boards[player] = playerBoard
