@@ -18,6 +18,7 @@ class SessionSelectScreen:
         #Contains 4 element arrays - [name:string, boardSize:int, playerCount:int, state:string]
         self._sessions = []
         self._refreshSessions()
+        self.joinFailText = ""
 
         #mock session
         #self.addSession("Mock session", 8, 0)
@@ -88,6 +89,13 @@ class SessionSelectScreen:
             sessionRect = self.windowSurface.blit(nameText, nameTextRect)
             otherRect = self.windowSurface.blit(otherText, otherTextRect)
 
+            joinFailError = self.mediumFont.render(self.joinFailText, True, COLOR_WHITE,
+                                                   COLOR_BLACK)
+            joinFailErrorRect = joinFailError.get_rect()
+            joinFailErrorRect.left = 50
+            joinFailErrorRect.top = 380
+            self.windowSurface.blit(joinFailError, joinFailErrorRect)
+
             if clickedOnRect(sessionRect, events) or clickedOnRect(otherRect, events):
                 if name != "No sessions found":
                     print "Clicked on " + name + " session"
@@ -117,6 +125,8 @@ class SessionSelectScreen:
 
                     else:
                         print("Unable to join the session")
+                        self.joinFailText = "Unable to join, game already in progress"
+
 
 
 

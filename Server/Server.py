@@ -46,13 +46,15 @@ class Server():
             print("Invalid sessionName provided by %s" % username)
             return "FAIL:"+sessionName, ""
 
-        session.addPlayer(username)
 
-        if self.host == None:
-            #Set the first joining player as host
-            self.host = username
+
+
 
         if session.state == "INIT":
+            if self.host == None:
+                # Set the first joining player as host
+                self.host = username
+            session.addPlayer(username)
             #Doesn't matter if rejoining. User can re-place his ships
             #TODO: Handle case where user placed ships, game is still in INIT but user rejoined
             print("Allowing %s to join." % username)
