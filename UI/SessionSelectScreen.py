@@ -99,10 +99,22 @@ class SessionSelectScreen:
 
                     if(response.startswith("FAIL") == False):
                         split = response.split(':')
+
                         #Third element should be true if the client is host
                         isHost = split[2] == 'True'
+
                         #TODO: Determine to go ingame or start from setup ships screen
                         self.client.loadSetupShipsScreen(boardSize, isHost)
+
+                        #Fourth element should contain the already connected users
+                        playerData = split[3].split(";")
+                        print(playerData)
+                        for i in range(0, len(playerData), 2):
+                            playerName = playerData[i]
+                            playerReady = playerData[i + 1] == 'True'
+                            self.client.screen.addReadyPlayer(playerName, playerReady)
+
+
                     else:
                         print("Unable to join the session")
 

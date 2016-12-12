@@ -56,11 +56,27 @@ class Server():
             #Doesn't matter if rejoining. User can re-place his ships
             #TODO: Handle case where user placed ships, game is still in INIT but user rejoined
             print("Allowing %s to join." % username)
-            return "WELCOME:" + sessionName + ":" + str(self.host == username), ""
+
+            message = "WELCOME:" + sessionName + ":" + str(self.host == username) + ":"
+            # Also include a list of currently connected players
+            for player in session.players.keys():
+                message += player + ";" + str(session.playerReady[player]) + ";"
+            # Remove the extra ; at the end
+            message = message[:-1]
+
+            return message, ""
         else:
             if username in session.players:
                 print("Allowing %s to rejoin." % username)
-                return "WELCOMEBACK:"+sessionName + ":" + str(self.host == username), ""
+
+                message = "WELCOMEBACK:"+sessionName + ":" + str(self.host == username) + ":"
+                # Also include a list of currently connected players
+                for player in session.players.keys():
+                    message += player + ";" + str(session.playerReady[player]) + ";"
+                # Remove the extra ; at the end
+                message = message[:-1]
+
+                return message, ""
             else:
                 print("Rejecting %s joining. Game already started." % username)
                 return "FAIL:"+sessionName, ""
