@@ -49,21 +49,49 @@ class GameScreen:
 
         y = 100
         #Player list - WIP
+        everyoneReady = True
         for player in self.playerReady:
             ready = self.playerReady[player]
+
+            x = 20
+
+            if self.isHost:
+                #Add kick option
+                kickText = self.smallFont.render("KICK", True, COLOR_WHITE, COLOR_BLACK)
+                kickTextRect = kickText.get_rect()
+                kickTextRect.left = x
+                kickTextRect.top = y
+                x += 45
+                kickRect = self.windowSurface.blit(kickText, kickTextRect)
+                if clickedOnRect(kickRect, events):
+                    #TODO
+                    print "Should kick player"
+
+
 
             if ready:
                 color = COLOR_GREEN
             else:
                 color = COLOR_RED
-            playerText = self.mediumFont.render(player, True, color)
+                everyoneReady = False
+            playerText = self.smallFont.render(player, True, color)
 
             playerTextRect = playerText.get_rect()
-            playerTextRect.left = 20
+            playerTextRect.left = x
             playerTextRect.top = y
-            y += 50
+            y += 40
             self.windowSurface.blit(playerText, playerTextRect)
 
+        if everyoneReady:
+            #
+            startGameText = self.mediumFont.render("Start game", True, COLOR_WHITE, COLOR_BLACK)
+            startGameTextRect = startGameText.get_rect()
+            startGameTextRect.left = 20
+            startGameTextRect.bottom = 470
+            startGameRect = self.windowSurface.blit(startGameText, startGameTextRect)
+            if clickedOnRect(startGameRect, events):
+                # TODO
+                print "Should start game"
 
 
         #Navigating between boards

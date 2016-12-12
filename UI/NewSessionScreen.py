@@ -52,6 +52,6 @@ class NewSessionScreen:
                 self.client.sessionName = sessionName
                 success = self.client.createSession(sessionName, size, self.client.username)
                 if(success):
-                    self.client.loadSetupShipsScreen(size)
+                    self.client.loadSetupShipsScreen(size, True)
                 else:
                     print "Something went wrong creating a session."

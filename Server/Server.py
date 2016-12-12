@@ -9,13 +9,13 @@ class Server():
         self.name = 'Hardcoded localhost server'
         self.prefix = self.name
         self.sessions = {}
+        self.host = None
         self.users = defaultdict(str)
         self.connections = []
         self.initListeners()
 
         #Create a session for faster debugging
         self.createSessionCallback("Test Session:4:MockUser")
-        self.createSessionCallback("Test Session2:8:MockUser")
 
 
     def initListeners(self):
@@ -48,15 +48,19 @@ class Server():
 
         session.addPlayer(username)
 
+        if self.host == None:
+            #Set the first joining player as host
+            self.host = username
+
         if session.state == "INIT":
             #Doesn't matter if rejoining. User can re-place his ships
             #TODO: Handle case where user placed ships, game is still in INIT but user rejoined
             print("Allowing %s to join." % username)
-            return "WELCOME:" + sessionName, ""
+            return "WELCOME:" + sessionName + ":" + str(self.host == username), ""
         else:
             if username in session.players:
                 print("Allowing %s to rejoin." % username)
-                return "WELCOMEBACK:"+sessionName, ""
+                return "WELCOMEBACK:"+sessionName + ":" + str(self.host == username), ""
             else:
                 print("Rejecting %s joining. Game already started." % username)
                 return "FAIL:"+sessionName, ""

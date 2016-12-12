@@ -98,7 +98,11 @@ class SessionSelectScreen:
                     print "Server responded with %s" % response
 
                     if(response.startswith("FAIL") == False):
-                        self.client.loadSetupShipsScreen(boardSize)
+                        split = response.split(':')
+                        #Third element should be true if the client is host
+                        isHost = split[2] == 'True'
+                        #TODO: Determine to go ingame or start from setup ships screen
+                        self.client.loadSetupShipsScreen(boardSize, isHost)
                     else:
                         print("Unable to join the session")
 
