@@ -47,6 +47,21 @@ class Session(threading.Thread):
                                                  body="NEWPLAYER:%s"%name)
                 return True
 
+
+    def run(self):
+        while 1:
+            #Check keepalive values for players and mark players as not ready if it is 20 seconds old
+            for player in self.players:
+                if player != "MockUser":
+                    #ignore mockuser
+                    if self.players[player] != 0:
+                        if float(self.players[player]) + 20 < float(time.time()):
+                            if self.playerReady[player]:
+                                print "Old keepalive for player", player
+                                print "Marking player as inactive"
+                                self.playerReady[player] = False
+            time.sleep(1) #check only every second
+
     def initChannels(self):
         with self.lock:
             self.updateConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -69,11 +84,18 @@ class Session(threading.Thread):
             self.finishedPlacingListener = MethodType(createRPCListener(self,'rpc_finished_placing',self.finishedPlacingCallback), self, Session)
             self.finishedPlacing = threading.Thread(target=self.finishedPlacingListener)
 
+            self.keepAliveListener = MethodType(createRPCListener(self, 'rpc_update_keep_alive', self.updateKeepAlive), self, Session)
+            self.keepAliveListener = threading.Thread(target = self.keepAliveListener)
+
+            self.runThread = threading.Thread(target = self.run)
+
             self.kickPlayer.start()
             self.placeship.start()
             self.bombship.start()
             self.gamestart.start()
             self.finishedPlacing.start()
+            self.keepAliveListener.start()
+            self.runThread.start()
 
     def kickPlayerCallback(self, request):
         print(" [.] kickPlayer(%s)" % request)
@@ -230,3 +252,12 @@ class Session(threading.Thread):
             return "OK",""
         else:
             return "FAIL",""
+
+    def updateKeepAlive(self,request):
+        name, keepalive = request.split(":")
+        keepalive = float(keepalive)
+        self.players[name] = keepalive
+        print "New keepalive:", name, keepalive
+        #TODO check why it fails with OK
+        #fails with ok as it does not contain :, dno why
+        return "O:K", ""

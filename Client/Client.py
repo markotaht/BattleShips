@@ -8,6 +8,7 @@ from UI.Assets import *
 
 
 from types import MethodType
+from time import time
 
 class Client(object):
     def __init__(self):
@@ -24,6 +25,7 @@ class Client(object):
         self.loadMainMenuScreen()
 
         self.state = "INIT"
+        self.lastkeepAlive  = 0
 
         #Start the main loop
         self.run();
@@ -45,6 +47,15 @@ class Client(object):
             self.screen.update(events)
             # refresh the screen
             pygame.display.flip()
+            #send keepalive every 10 seconds
+            if time() > self.lastkeepAlive + 10:
+                try:
+                    self.lastkeepAlive = time()
+                    response = self.updateKeepAlive(self.username + ":" + str(self.lastkeepAlive))
+                    print "Updating keepalive, response", response
+                except AttributeError:
+                    # ignore if player has not joined a session
+                    pass
 
     def loadMainMenuScreen(self):
         self.screen = MainMenuScreen()
@@ -103,6 +114,7 @@ class Client(object):
         self.placeShip = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_place_ship'), self, Client)
         self.bomb = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_bomb'), self, Client)
         self.startGame = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_start'), self, Client)
+        self.updateKeepAlive = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_update_keep_alive', True), self, Client)
 
 
     def initServerListeners(self):
