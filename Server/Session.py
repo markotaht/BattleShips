@@ -114,7 +114,8 @@ class Session(threading.Thread):
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                              routing_key='',
                                              body="READY:%s" % name)
-            return "OK", "READY2:" + name
+            print "%s is ready"%name
+            return "OK", "READY:" + name
         else:
             return "FAIL", ""
 
@@ -249,6 +250,14 @@ class Session(threading.Thread):
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                              routing_key='',
                                              body="START")
+            #Also notify player
+            #TODO actually not working and can be skipped as host is first?
+            message = ":".join(["NEXT", self.order[self.playerturn]])
+            print ""
+            self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                             routing_key='',
+                                             body=message)
+            print "%s's turn" % self.order[self.playerturn]
 
             return "OK",""
         else:
@@ -258,7 +267,7 @@ class Session(threading.Thread):
         name, keepalive = request.split(":")
         keepalive = float(keepalive)
         self.players[name] = keepalive
-        print "New keepalive:", name, keepalive
+        #print "New keepalive:", name
         #TODO check why it fails with OK
         #fails with ok as it does not contain :, dno why
         return "O:K", ""

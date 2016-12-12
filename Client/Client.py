@@ -54,11 +54,11 @@ class Client(object):
                 try:
                     self.lastkeepAlive = time()
                     response = self.updateKeepAlive(self.username + ":" + str(self.lastkeepAlive))
-                    print "Updating keepalive, response", response
+                    if response != "O:K":
+                        print "Updating keepalive, response", response
                 except AttributeError:
                     # ignore if player has not joined a session
-                    pass
-
+                    print "Trying to send keepalive but player has not joined a session"
     def loadMainMenuScreen(self):
         self.screen = MainMenuScreen()
         self.screen.init(self, self.windowSurface)
@@ -108,7 +108,7 @@ class Client(object):
 
     def initlisteners(self):
         self.sessionIdentifier = self.serverName + "." + self.sessionName
-        self.asynclistener = threading.Thread(target=self.listenForUpdates, args=(self.asyncConnection,))
+        self.asynclistener = threading.Thread(target=self.listenForUpdates, name= "asynclistenerThread", args=(self.asyncConnection,))
         self.asynclistener.start()
 
         self.kickPlayer = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_kick_player'), self, Client)
@@ -147,6 +147,9 @@ class Client(object):
                     print "Game has been started by the host!"
                     self.screen.isGameStarted = True
                     return
+                elif body == "IGNORE":
+                    print "Ignore global message!"
+                    return
                 parts = body.split(":")
                 if parts[0] == "BOMB":
                     if parts[1] != "SINK" and parts[2] != self.username:
@@ -162,6 +165,7 @@ class Client(object):
                     try:
                         self.screen.addReadyPlayer(parts[1], True)
                     except AttributeError:
+                        print "Attribute error on %s"%parts[1]
                         #IF we are the player
                         pass
                 elif parts[0] == "NEWPLAYER":
@@ -169,6 +173,7 @@ class Client(object):
                     try:
                         self.screen.addReadyPlayer(parts[1], False)
                     except AttributeError:
+                        print "Attribute error on %s" % parts[1]
                         #IF we are the player
                         pass
                 else:
@@ -184,6 +189,13 @@ class Client(object):
             print "ConnectionClosed exception"
         except ChannelClosed:
             print "ChannelClosed exception"
+        except KeyError:
+            print "KeyError with", connection
+        except AssertionError:
+            print "Assertion Error"
+        except Exception :
+            print "Unknown Exception!"
+
 
     #Stuff for RPC/MQ
     def on_response(self, ch, method, props, body):

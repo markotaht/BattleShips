@@ -17,7 +17,7 @@ class GameScreen:
         self.playerReady = playerReady
         board.parent = self
         #Active = Player whose board is being shown
-        self.activePlayer = "__me__"
+        self.activePlayer = "__me__" if isHost else "Other"
         self.activeBoard = self.boards["__me__"]
         #Turn = Player whose turn it actually is
         self.turnPlayer = "__me__" if isHost else "Other"
@@ -84,16 +84,18 @@ class GameScreen:
 
         if everyoneReady and self.isHost:
             #
-            startGameText = self.mediumFont.render("Start game", True, COLOR_WHITE, COLOR_BLACK)
-            startGameTextRect = startGameText.get_rect()
-            startGameTextRect.left = 20
-            startGameTextRect.bottom = 470
-            startGameRect = self.windowSurface.blit(startGameText, startGameTextRect)
-            if clickedOnRect(startGameRect, events):
-                print("Starting the game...")
-                response = self.client.startGame()
-                if response.startswith("OK"):
-                    self.isGameStarted = True
+            if not self.isGameStarted:
+                startGameText = self.mediumFont.render("Start game", True, COLOR_WHITE, COLOR_BLACK)
+                startGameTextRect = startGameText.get_rect()
+                startGameTextRect.left = 20
+                startGameTextRect.bottom = 470
+                startGameRect = self.windowSurface.blit(startGameText, startGameTextRect)
+                if clickedOnRect(startGameRect, events):
+                    print("Starting the game...")
+                    response = self.client.startGame()
+                    if response.startswith("OK"):
+                        self.isGameStarted = True
+                        self.nextBoard()
 
 
         #Navigating between boards
@@ -123,6 +125,9 @@ class GameScreen:
         currentBoardTextRect.centerx = 440
         currentBoardTextRect.top = 425
         self.windowSurface.blit(currentBoardText, currentBoardTextRect)
+
+
+
 
         self.activeBoard.update(events)
 
@@ -155,6 +160,15 @@ class GameScreen:
     def onBoardClick(self, tileX, tileY):
         #TODO: identify board using self.activeBoard and do whatever
         #is needed depending on scenario
+
+        # game logic
+        # my turn
+        if self.isGameStarted:
+            if self.turnPlayer == "__me__":
+                request = ":".join([str(tileX),str(tileY), self.client.name, "default"])
+                #response = self.client.bomb(request)
+                print "Bomb response"
+
         print str(tileX) + " " + str(tileY)
 
     def addPlayer(self, name, board):
