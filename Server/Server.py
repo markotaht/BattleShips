@@ -82,7 +82,8 @@ class Server():
                 message = "WELCOMEBACK:"+sessionName + ":" + str(session.hostName == username) + ":"
                 # Also include a list of currently connected players
                 for player in session.players.keys():
-                    message += player + ";" + str(session.players[player].isReady) + ";"
+                    if player != username:
+                        message += player + ";" + str(session.players[player].isReady) + ";"
                 # Remove the extra ; at the end
                 message = message[:-1]
 
