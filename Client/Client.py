@@ -141,6 +141,7 @@ class Client(object):
         print(' [*] Waiting for updates. To exit press CTRL+C')
 
         def callback(ch, method, properties, body):
+            print "CLIENT - ", body
             if body == "START":
                 print "Game has been started by the host!"
                 self.screen.isGameStarted = True
@@ -150,10 +151,20 @@ class Client(object):
                 return
             parts = body.split(":")
             if parts[0] == "BOMB":
-                if parts[1] != "SINK" and parts[2] != self.username:
+                print "bomba",parts
+                if parts[1] == self.username:
+                    #we were hit and we should see our ship attacked
+                    #show that we were hit
+                    self.screen.boards[self.username].setTileByIndex(int(parts[3]), int(parts[4]), 3)
+                    #show the attacker (strange, as we know who's turn it was)
+                if parts[1] != "SUNK" and parts[2] != self.username:
                     return
                 print body
+            elif parts[0] == "SUNK":
+                print "SUNK", parts
             elif parts[0] == "NEXT":
+                print parts[1], self.username
+                self.screen.setTurnPlayer(parts[1])
                 if parts[1] == self.username:
                     print "My turn"
                 else:

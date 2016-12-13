@@ -81,7 +81,7 @@ class Session(threading.Thread):
             self.gameStartListener = MethodType(createRPCListener(self,'rpc_start',self.gameStartCallback), self, Session)
             self.gamestart = threading.Thread(target=self.gameStartListener)
 
-            self.finishedPlacingListener = MethodType(createRPCListener(self,'rpc_finished_placing',self.finishedPlacingCallback), self, Session)
+            self.finishedPlacingListener = MethodType(createRPCListener(self,'rpc_finished_placing',self.finishedPlacingCallback, True), self, Session)
             self.finishedPlacing = threading.Thread(target=self.finishedPlacingListener)
 
             self.keepAliveListener = MethodType(createRPCListener(self, 'rpc_update_keep_alive', self.updateKeepAlive), self, Session)
@@ -222,15 +222,24 @@ class Session(threading.Thread):
         response = self.checkHit(int(x),int(y),player)
         print response
 
+        if response == "MISS":
+            self.shots -= 1
+
         #TODO teha paremaks ja lisada juurde laeva edastamine koigile
         if response == "HIT" and self.sunk(int(x),int(y),player):
-            message = ":".join(["SUNK",x,y,player])
+            message = ":".join(["SUNK",player, attacker,x,y])
             response = "SUNK"
         else:
-            message = ":".join(["BOMB",response,player,x,y])
-        print message
-        #TODO see kuidagi teisiti vb handlida
-        self.shots -= 1
+            message = ":".join(["BOMB",player,attacker,x,y,response])
+
+        #TODO this should be sent by the super global message thing
+        self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                         routing_key='',
+                                         body=message)
+
+        print "SERVER - message:", message
+        print "Shots remaining:", self.shots
+        # TODO see kuidagi teisiti vb handlida
         if self.shots == 0:
             self.notifyNextPlayer()
 
@@ -262,13 +271,15 @@ class Session(threading.Thread):
         print("Starting the game")
         if self.state == "INIT":
             self.state = "PLAY"
+            #set number of shots
+            self.shots = len(self.order)-1
 
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                              routing_key='',
                                              body="START")
-            #Also notify player
+            #Also notify that host is first
             #TODO actually not working and can be skipped as host is first?
-            message = ":".join(["NEXT", self.order[self.playerturn]])
+            message = ":".join(["NEXT", self.order[0]])
             print ""
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                              routing_key='',

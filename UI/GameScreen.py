@@ -20,7 +20,7 @@ class GameScreen:
         self.activePlayer = self.client.username
         self.activeBoard = self.boards[self.client.username]
         #Turn = Player whose turn it actually is
-        self.turnPlayer = self.client.username if self.isHost else "not you"
+        self.turnPlayer = "Waiting from server"
 
         #Create boards for the existing players
         for player in playerReady.keys():
