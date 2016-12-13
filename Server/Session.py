@@ -2,6 +2,7 @@ import pika, threading, time, traceback, sys
 
 from commons import createRPCListener
 from types import MethodType
+from Player import Player
 
 #TODO: Make shared with Board.py
 TILE_EMPTY = 0
@@ -10,11 +11,12 @@ TILE_MISS = 2
 TILE_SHIP_HIT = 3
 
 class Session(threading.Thread):
-    def __init__(self, server, name, boardWidth):
+    def __init__(self, server, sessionName, hostName, boardWidth):
         threading.Thread.__init__(self)
         self.server = server
-        self.name = name
-        self.prefix = server +"." + name
+        self.name = sessionName
+        self.hostName = hostName
+        self.prefix = server +"." + sessionName
         self.lock = threading.Lock()
         self.updateChannel = None
         self.connections = []
@@ -22,8 +24,6 @@ class Session(threading.Thread):
         self.players = {}
         self.order = []
         self.boardWidth = boardWidth
-        self.boards = {}
-        self.playerReady = {}
         self.dead = []
         self.state = "INIT"
         self.playerturn = 0
@@ -37,10 +37,16 @@ class Session(threading.Thread):
             #if name in self.players:
             #    return False
             #else:
-                self.players[name] = time.time()
-                self.playerReady[name] = False
-                self.boards[name] = [[0 for i in range(self.boardWidth)] for j in range(self.boardWidth)]
+                board = [[0 for i in range(self.boardWidth)] for j in range(self.boardWidth)]
+                isHost = name == self.hostName
+                keepAliveTime = time.time()
+
+                player = Player()
+                player.init(name, isHost, False, keepAliveTime, board)
+
+                self.players[name] = player
                 self.order.append(name)
+
                 #TODO: This should be sent as the argument in server.py
                 self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                                  routing_key='',
@@ -51,15 +57,14 @@ class Session(threading.Thread):
     def run(self):
         while 1:
             #Check keepalive values for players and mark players as not ready if it is 20 seconds old
-            for player in self.players:
-                if player != "MockUser":
-                    #ignore mockuser
-                    if self.players[player] != 0:
-                        if float(self.players[player]) + 20 < float(time.time()):
-                            if self.playerReady[player]:
-                                print "Old keepalive for player", player
-                                print "Marking player as inactive"
-                                self.playerReady[player] = False
+            for playerName in self.players:
+                player = self.players[playerName]
+                if player != 0:
+                    if float(player.keepAliveTime) + 20 < float(time.time()):
+                        if player.isReady:
+                            print "Old keepalive for player", player.keepAliveTime
+                            print "Marking player as disconnected"
+                            player.connected = False
             time.sleep(1) #check only every second
 
     def initChannels(self):
@@ -69,11 +74,8 @@ class Session(threading.Thread):
             self.updateChannel.exchange_declare(exchange=self.prefix + 'updates',type='fanout')
             self.connections.append(self.updateConnection)
 
-            self.kickPlayerListener = MethodType(createRPCListener(self, 'rpc_kick_player', self.placeShipCallback), self, Session)
+            self.kickPlayerListener = MethodType(createRPCListener(self, 'rpc_kick_player', self.kickPlayerCallback), self, Session)
             self.kickPlayer = threading.Thread(target=self.kickPlayerListener)
-
-            self.placeShipListener = MethodType(createRPCListener(self,'rpc_place_ship',self.kickPlayerCallback), self, Session)
-            self.placeship = threading.Thread(target=self.placeShipListener)
 
             self.bombShipListener = MethodType(createRPCListener(self,'rpc_bomb',self.bombShipCallback), self, Session)
             self.bombship = threading.Thread(target=self.bombShipListener)
@@ -90,7 +92,6 @@ class Session(threading.Thread):
             self.runThread = threading.Thread(target = self.run)
 
             self.kickPlayer.start()
-            self.placeship.start()
             self.bombship.start()
             self.gamestart.start()
             self.finishedPlacing.start()
@@ -110,7 +111,8 @@ class Session(threading.Thread):
 
         success = self.placeShips(name, ships.split("|"))
         if success:
-            self.playerReady[name] = True
+            self.players[name].isReady = True
+            #TODO: Is this still needed?
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                              routing_key='',
                                              body="READY:%s" % name)
@@ -122,7 +124,7 @@ class Session(threading.Thread):
     def placeShips(self, name, ships):
         print(ships)
         try:
-            board = self.boards[name]
+            board = self.players[name].board
 
             for ship in ships:
                 ship = ship.split(";")
@@ -177,14 +179,14 @@ class Session(threading.Thread):
 
 
     def checkHit(self,x,y,player):
-        if self.boards[player][x][y] == 1:
-            self.boards[player][x][y] = 3
+        if self.players[player].board[x][y] == 1:
+            self.players[player].board[x][y] = 3
             return "HIT"
         return "MISS"
 
     def sunk(self,x,y,player):
         #TODO kui server hakkab ka misse hoidma siis peab seda t2iendama
-        tmpBoard = self.boards[player]
+        tmpBoard = self.players[player].board
 
         #check if ship on x+
         for i in range(x+1, self.boardWidth):
@@ -254,18 +256,6 @@ class Session(threading.Thread):
         self.shots = len(self.order)-1
         print "%s's turn"%self.order[self.playerturn]
 
-    def __placeShipOnField(self,x,y,dir,name):
-        self.board[name][y][x] = 1
-        #Something something direction
-
-    def placeShipCallback(self, request):
-        x, y, dir, name = request.split(":")
-        print(" [.] place(%s)" % name)
-        self.__placeShipOnField(int(x),int(y),dir,name)
-        response = "OK"
-
-        return response, ""
-
     def gameStartCallback(self,request):
         #TODO: Possibly validate if the request sender is the host
         print("Starting the game")
@@ -293,7 +283,7 @@ class Session(threading.Thread):
     def updateKeepAlive(self,request):
         name, keepalive = request.split(":")
         keepalive = float(keepalive)
-        self.players[name] = keepalive
+        self.players[name].keepAliveTime = keepalive
         #print "New keepalive:", name
         #TODO check why it fails with OK
         #fails with ok as it does not contain :, dno why

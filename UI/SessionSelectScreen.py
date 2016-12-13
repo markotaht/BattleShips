@@ -61,7 +61,7 @@ class SessionSelectScreen:
         y = 150
         if len(self._sessions) == 0:
             # no sessions
-            sessions = [["No sessions found", 0, 0]]
+            sessions = [["No sessions found", 0, 0, ""]]
         else:
             sessions = self._sessions
 
@@ -132,6 +132,8 @@ class SessionSelectScreen:
 
     def _refreshSessions(self):
         data = self.client.getSessions("").split(":")
+        if len(data) <= 1:
+            return
         self._sessions = []
         for i in range(0, len(data), 4):
             name = data[i]
