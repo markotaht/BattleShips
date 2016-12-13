@@ -197,7 +197,7 @@ class Session(threading.Thread):
             elif tmpBoard[i][y] == 0:
                 break #dont continue if nothing there
 
-        for i in range(x-1, 0, -1):
+        for i in range(x-1, -1, -1):
             if tmpBoard[i][y] == 1:
                 return False
             elif tmpBoard[i][y] == 0:
@@ -210,7 +210,7 @@ class Session(threading.Thread):
             elif tmpBoard[x][i] == 0:
                 break
 
-        for i in range(y-1, 0, -1):
+        for i in range(y-1, -1, -1):
             if tmpBoard[x][i] == 1:
                 return False
             elif tmpBoard[x][i] == 0:

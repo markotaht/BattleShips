@@ -4,3 +4,5 @@ class Player:
         self.isReady = isReady
         self.board = board
         self.connected = True
+        #For checking if this player has been shot by the local player during a particular turn
+        self.hasBeenShot = False

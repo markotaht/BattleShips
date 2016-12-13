@@ -61,6 +61,17 @@ class GameScreen:
                     #TODO
                     print "Should kick player"
 
+            if self.turnPlayer == self.client.username:
+                if player != self.client.username and self.players[player].hasBeenShot:
+                    shootText = self.smallFont.render("[SHOT]", True, COLOR_BLACK)
+                    shootTextRect = shootText.get_rect()
+                    shootTextRect.left = x
+                    shootTextRect.top = y
+                    x += 65
+                    self.windowSurface.blit(shootText, shootTextRect)
+
+
+
             if self.isGameStarted:
                 if self.players[player].connected:
                     color = COLOR_GREEN
@@ -158,15 +169,23 @@ class GameScreen:
         if self.isGameStarted:
             if self.turnPlayer == self.client.username:
                 if self.activePlayer != self.client.username:
-                    request = ":".join([str(tileX),str(tileY), self.activePlayer, self.client.username])
-                    response = self.client.bomb(request)
-                    print "Bomb response", response
-                    #TODO additional game logic needed here?
-                    #todo also check that you are not clicking on already occupied piece
-                    if response == "HIT" or response == "SUNK":
-                        self.activeBoard.setTileByIndex(tileX, tileY, 3)
-                    if response == "MISS":
-                        self.activeBoard.setTileByIndex(tileX, tileY, 2)
+                    if not self.players[self.activePlayer].hasBeenShot:
+                        if self.activeBoard.getTileByIndex(tileX, tileY) == 0:
+                            request = ":".join([str(tileX),str(tileY), self.activePlayer, self.client.username])
+                            response = self.client.bomb(request)
+                            print "Bomb response", response
+                            #TODO additional game logic needed here?
+                            #todo also check that you are not clicking on already occupied piece
+                            if response == "HIT" or response == "SUNK":
+                                self.activeBoard.setTileByIndex(tileX, tileY, 3)
+                            if response == "MISS":
+                                #Set this board to be finished with the current move
+                                self.players[self.activePlayer].hasBeenShot = True
+                                self.activeBoard.setTileByIndex(tileX, tileY, 2)
+                        else:
+                            print "Tried to click on a tile that has already been hit"
+                    else:
+                        print "Tried to shoot a player that the player has already shot"
                 else:
                     print "click on your board "+ str(tileX) + " " + str(tileY)
 
@@ -294,3 +313,7 @@ class GameScreen:
     def setTurnPlayer(self, player):
         self.turnPlayer = player
 
+        if self.turnPlayer == self.client.username:
+            #Reset the hasBeenShot field
+            for player in self.players.keys():
+                self.players[player].hasBeenShot = False
