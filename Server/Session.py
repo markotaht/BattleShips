@@ -177,29 +177,41 @@ class Session(threading.Thread):
 
 
     def checkHit(self,x,y,player):
-        print self.boards[player]
         if self.boards[player][x][y] == 1:
+            self.boards[player][x][y] = 3
             return "HIT"
         return "MISS"
 
     def sunk(self,x,y,player):
-        #TODO lisada juurde et kas on laev loppenud voi mitte
-        #TODO not used yet
-        for i in range(x-1,0,-1):
-            if self.boards[player][y][x] == 1:
-                return False
+        #TODO kui server hakkab ka misse hoidma siis peab seda t2iendama
+        tmpBoard = self.boards[player]
 
-        for i in range(x+1,self.boardWidth):
-            if self.boards[player][y][x] == 1:
-                return False
+        #check if ship on x+
+        for i in range(x+1, self.boardWidth):
+            if tmpBoard[i][y] == 1:
+                return False #Return false if we find ship
+            elif tmpBoard[i][y] == 0:
+                break #dont continue if nothing there
 
-        for i in range(y-1,0,-1):
-            if self.boards[player][y][x] == 1:
+        for i in range(x-1, 0, -1):
+            if tmpBoard[i][y] == 1:
                 return False
+            elif tmpBoard[i][y] == 0:
+                break
 
-        for i in range(y+1):
-            if self.boards[player][y][x] == 1:
+
+        for i in range(y+1, self.boardWidth):
+            if tmpBoard[x][i] == 1:
                 return False
+            elif tmpBoard[x][i] == 0:
+                break
+
+        for i in range(y-1, 0, -1):
+            if tmpBoard[x][i] == 1:
+                return False
+            elif tmpBoard[x][i] == 0:
+                break
+
         return True
 
     def bombShipCallback(self,request):
@@ -211,8 +223,9 @@ class Session(threading.Thread):
         print response
 
         #TODO teha paremaks ja lisada juurde laeva edastamine koigile
-        if self.sunk(int(x),int(y),player):
+        if response == "HIT" and self.sunk(int(x),int(y),player):
             message = ":".join(["SUNK",x,y,player])
+            response = "SUNK"
         else:
             message = ":".join(["BOMB",response,player,x,y])
         print message
