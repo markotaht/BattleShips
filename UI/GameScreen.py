@@ -67,11 +67,18 @@ class GameScreen:
                     #TODO
                     print "Should kick player"
 
-            if self.players[player].isReady:
-                color = COLOR_GREEN
+            if self.isGameStarted:
+                if self.players[player].connected:
+                    color = COLOR_GREEN
+                else:
+                    #Mark disconnected players grey
+                    color = COLOR_DARK_GREY
             else:
-                color = COLOR_RED
-                everyoneReady = False
+                if self.players[player].isReady:
+                    color = COLOR_GREEN
+                else:
+                    color = COLOR_RED
+                    everyoneReady = False
 
             playerText = self.smallFont.render(player, True, color)
             playerTextRect = playerText.get_rect()
@@ -80,19 +87,18 @@ class GameScreen:
             self.windowSurface.blit(playerText, playerTextRect)
             y += 40
 
-        if everyoneReady and self.isHost and len(self.players) > 1:
-            if not self.isGameStarted:
-                startGameText = self.mediumFont.render("Start game", True, COLOR_WHITE, COLOR_BLACK)
-                startGameTextRect = startGameText.get_rect()
-                startGameTextRect.left = 20
-                startGameTextRect.bottom = 470
-                startGameRect = self.windowSurface.blit(startGameText, startGameTextRect)
-                if clickedOnRect(startGameRect, events):
-                    print("Starting the game...")
-                    response = self.client.startGame()
-                    if response.startswith("OK"):
-                        self.isGameStarted = True
-                        self.nextBoard()
+        if not self.isGameStarted and everyoneReady and self.isHost and len(self.players) > 1:
+            startGameText = self.mediumFont.render("Start game", True, COLOR_WHITE, COLOR_BLACK)
+            startGameTextRect = startGameText.get_rect()
+            startGameTextRect.left = 20
+            startGameTextRect.bottom = 470
+            startGameRect = self.windowSurface.blit(startGameText, startGameTextRect)
+            if clickedOnRect(startGameRect, events):
+                print("Starting the game...")
+                response = self.client.startGame()
+                if response.startswith("OK"):
+                    self.isGameStarted = True
+                    self.nextBoard()
 
 
         #Navigating between boards

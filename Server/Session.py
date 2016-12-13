@@ -61,11 +61,16 @@ class Session(threading.Thread):
                 player = self.players[playerName]
                 if player != 0:
                     if float(player.keepAliveTime) + 20 < float(time.time()):
-                        if player.isReady:
+                        if player.connected:
                             print "Old keepalive for player", player.keepAliveTime
                             print "Marking player as disconnected"
-                            #TODO: Notify everyone that the player is now inactive
+                            #TODO:
                             player.connected = False
+
+                            self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                                             routing_key='',
+                                                             body="DISCONNECTED:%s" % playerName)
+
             time.sleep(1) #check only every second
 
     def initChannels(self):

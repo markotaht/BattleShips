@@ -184,7 +184,9 @@ class Client(object):
             elif parts[0] == "NEWPLAYER":
                 print "%s joined the game" % parts[1]
                 self.screen.addPlayer(parts[1])
-
+            elif parts[0] == "DISCONNECTED":
+                print "Marking %s as disconnected" % parts[1]
+                self.screen.players[parts[1]].connected = False
             else:
                 print "not known message %s", body
 
