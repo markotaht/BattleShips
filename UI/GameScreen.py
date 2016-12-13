@@ -162,11 +162,10 @@ class GameScreen:
                     response = self.client.bomb(request)
                     print "Bomb response", response
                     #TODO additional game logic needed here?
-                    if response == "HIT":
+                    #todo also check that you are not clicking on already occupied piece
+                    if response == "HIT" or response == "SUNK":
                         self.activeBoard.setTileByIndex(tileX, tileY, 3)
-                    elif response == "SUNK":
-                        self.activeBoard.setTileByIndex(tileX, tileY, 3)
-                    else:
+                    if response == "MISS":
                         self.activeBoard.setTileByIndex(tileX, tileY, 2)
                 else:
                     print "click on your board "+ str(tileX) + " " + str(tileY)
@@ -182,7 +181,6 @@ class GameScreen:
             y = int(tmp[1])
             tmpBoard.setTileByIndex(x,y, 3)
 
-        #todo add miss stuff also
         #add miss symbols to edges
         for j in shiphit:
             tmp = j.split(";")
@@ -196,11 +194,22 @@ class GameScreen:
                 elif tmpBoard.getTileByIndex(i,y) == 0:
                     #if we find empty place place miss symbol there
                     tmpBoard.setTileByIndex(i, y, 2)
+                    #and also to corners!
+                    if y + 1 <= self.boardWidth:
+                        tmpBoard.setTileByIndex(i, y + 1, 2)
+                    if y != 0:
+                        tmpBoard.setTileByIndex(i, y-1, 2)
                     break
                 else:
                     #other options:
                     #miss - can skip
                     #if there is ship symbol then something is wrong
+                    #if previous was hitsymbol and current is miss then add corners
+                    if tmpBoard.getTileByIndex(i-1,y) == 3 and tmpBoard.getTileByIndex(i,y) == 2:
+                        if y + 1 <= self.boardWidth:
+                            tmpBoard.setTileByIndex(i, y + 1, 2)
+                        if y != 0:
+                            tmpBoard.setTileByIndex(i, y - 1, 2)
                     break
             if x == 1:
                 if tmpBoard.getTileByIndex(0, y) == 0:
@@ -211,8 +220,17 @@ class GameScreen:
                         pass
                     elif tmpBoard.getTileByIndex(i,y) == 0:
                         tmpBoard.setTileByIndex(i, y, 2)
+                        if y + 1 <= self.boardWidth:
+                            tmpBoard.setTileByIndex(i, y + 1, 2)
+                        if y != 0:
+                            tmpBoard.setTileByIndex(i, y - 1, 2)
                         break
                     else:
+                        if tmpBoard.getTileByIndex(i + 1, y) == 3 and tmpBoard.getTileByIndex(i, y) == 2:
+                            if y + 1 <= self.boardWidth:
+                                tmpBoard.setTileByIndex(i, y + 1, 2)
+                            if y != 0:
+                                tmpBoard.setTileByIndex(i, y - 1, 2)
                         break
 
             for i in range(y + 1, self.boardWidth):
@@ -220,8 +238,17 @@ class GameScreen:
                     pass
                 elif tmpBoard.getTileByIndex(x,i) == 0:
                     tmpBoard.setTileByIndex(x, i, 2)
+                    if x + 1 <= self.boardWidth:
+                        tmpBoard.setTileByIndex(x+1, i, 2)
+                    if y != 0:
+                        tmpBoard.setTileByIndex(x-1, i, 2)
                     break
                 else:
+                    if tmpBoard.getTileByIndex(x, i-1) == 3 and tmpBoard.getTileByIndex(x, i) == 2:
+                        if x + 1 <= self.boardWidth:
+                            tmpBoard.setTileByIndex(x + 1, i, 2)
+                        if y != 0:
+                            tmpBoard.setTileByIndex(x - 1, i, 2)
                     break
             if y == 1:
                 if tmpBoard.getTileByIndex(x, 0) == 0:
@@ -232,13 +259,18 @@ class GameScreen:
                         pass
                     elif tmpBoard.getTileByIndex(x,i) == 0:
                         tmpBoard.setTileByIndex(x, i, 2)
+                        if x + 1 <= self.boardWidth:
+                            tmpBoard.setTileByIndex(x + 1, i, 2)
+                        if y != 0:
+                            tmpBoard.setTileByIndex(x - 1, i, 2)
                         break
                     else:
+                        if tmpBoard.getTileByIndex(x, i + 1) == 3 and tmpBoard.getTileByIndex(x, i) == 2:
+                            if x + 1 <= self.boardWidth:
+                                tmpBoard.setTileByIndex(x + 1, i, 2)
+                            if y != 0:
+                                tmpBoard.setTileByIndex(x - 1, i, 2)
                         break
-
-
-
-        print shiphit
 
     def addPlayer(self, playerName):
         #Create a new player with a board
