@@ -165,6 +165,13 @@ class Client(object):
                     return
                 print body
             elif parts[0] == "SUNK":
+                if parts[1] == self.username:
+                    #update board with hit
+                    self.screen.players[self.username].board.setTileByIndex(int(parts[3]), int(parts[4]), 3)
+                    self.screen.markAsSunk(parts[1],parts[5])
+                else:
+                    # if any ships were sinked it should be visible for everyone at moment of sinking
+                    self.screen.markAsSunk(parts[1], parts[5])
                 print "SUNK", parts
             elif parts[0] == "NEXT":
                 print parts[1], self.username

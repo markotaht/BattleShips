@@ -178,6 +178,22 @@ class GameScreen:
                 else:
                     print "click on your board "+ str(tileX) + " " + str(tileY)
 
+    #draws the sunk ship and it's surroundings
+    def markAsSunk(self,attackedPlayer, shiphit):
+        shiphit = shiphit.split(",")
+        #set the
+        tmpboard = self.players[attackedPlayer].board
+        for i in shiphit:
+            tmp = i.split(";")
+            x = int(tmp[0])
+            y = int(tmp[1])
+            tmpboard.setTileByIndex(x,y, 3)
+        #todo add miss stuff also
+
+
+
+        print shiphit
+
     def addPlayer(self, playerName):
         #Create a new player with a board
         board = Board()

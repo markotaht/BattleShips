@@ -118,10 +118,6 @@ class Session(threading.Thread):
         success = self.placeShips(name, ships.split("|"))
         if success:
             self.players[name].isReady = True
-            #TODO: Is this still needed?
-            self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
-                                             routing_key='',
-                                             body="READY:%s" % name)
             print "Session - %s is ready"%name
             return "OK", "READY:" + name
         else:
@@ -190,7 +186,7 @@ class Session(threading.Thread):
             return "HIT"
         return "MISS"
 
-    def sunk(self,x,y,player):
+    def checkSunk(self,x,y,player):
         #TODO kui server hakkab ka misse hoidma siis peab seda t2iendama
         tmpBoard = self.players[player].board
 
@@ -222,6 +218,41 @@ class Session(threading.Thread):
 
         return True
 
+    def getSunkDetails(self,x,y,player):
+        tmpBoard = self.players[player].board
+        shiphit = []#tuples of coords (x,y),board = 3
+
+        #can add x,y as they sunk the ship
+        shiphit.append((x,y))
+
+        #check all hits and create shiphit
+        for i in range(x + 1, self.boardWidth):
+            if tmpBoard[i][y] == 3:
+                shiphit.append((i,y))
+            else:
+                break
+
+        for i in range(x - 1, 0, -1):
+            if tmpBoard[i][y] == 3:
+                shiphit.append((i,y))
+            else:
+                break
+
+        for i in range(y + 1, self.boardWidth):
+            if tmpBoard[x][i] == 3:
+                shiphit.append((x,i))
+            else:
+                break
+
+        for i in range(y - 1, 0, -1):
+            if tmpBoard[x][i] == 3:
+                shiphit.append((x,i))
+            else:
+                break
+
+        return shiphit
+
+
     def bombShipCallback(self,request):
         print request
         x, y, player, attacker = request.split(":")
@@ -234,8 +265,13 @@ class Session(threading.Thread):
             self.shots -= 1
 
         #TODO teha paremaks ja lisada juurde laeva edastamine koigile
-        if response == "HIT" and self.sunk(int(x),int(y),player):
-            message = ":".join(["SUNK",player, attacker,x,y])
+        if response == "HIT" and self.checkSunk(int(x),int(y),player):
+            hitcoords = self.getSunkDetails(int(x),int(y),player)
+            print hitcoords
+            #pack for sending into x1;y1, x2;y2...
+            hitcoords = ",".join([str(a[0])+";"+str(a[1]) for a in hitcoords])
+            print hitcoords
+            message = ":".join(["SUNK",player, attacker,x,y, str(hitcoords)])
             response = "SUNK"
         else:
             message = ":".join(["BOMB",player,attacker,x,y,response])
