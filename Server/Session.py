@@ -64,7 +64,7 @@ class Session(threading.Thread):
                         if player.connected:
                             print "Old keepalive for player", player.keepAliveTime
                             print "Marking player as disconnected"
-                            #TODO:
+                            #TODO: Pick a new host
                             player.connected = False
 
                             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
