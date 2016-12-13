@@ -172,7 +172,6 @@ class GameScreen:
                         self.activeBoard.setTileByIndex(tileX, tileY, 3)
                     elif response == "SUNK":
                         self.activeBoard.setTileByIndex(tileX, tileY, 3)
-                        print "This is not handled yet"
                     else:
                         self.activeBoard.setTileByIndex(tileX, tileY, 2)
                 else:
@@ -181,14 +180,67 @@ class GameScreen:
     #draws the sunk ship and it's surroundings
     def markAsSunk(self,attackedPlayer, shiphit):
         shiphit = shiphit.split(",")
-        #set the
-        tmpboard = self.players[attackedPlayer].board
+        #mark ship as sunk
+        tmpBoard = self.players[attackedPlayer].board
         for i in shiphit:
             tmp = i.split(";")
             x = int(tmp[0])
             y = int(tmp[1])
-            tmpboard.setTileByIndex(x,y, 3)
+            tmpBoard.setTileByIndex(x,y, 3)
+
         #todo add miss stuff also
+        #add miss symbols to edges
+        for j in shiphit:
+            tmp = j.split(";")
+            x = int(tmp[0])
+            y = int(tmp[1])
+            # check if ship on x+
+            for i in range(x + 1, self.boardWidth):
+                if tmpBoard.getTileByIndex(i,y) == 3:
+                    #skip sunkship symbols
+                    pass
+                elif tmpBoard.getTileByIndex(i,y) == 0:
+                    #if we find empty place place miss symbol there
+                    tmpBoard.setTileByIndex(i, y, 2)
+                    break
+                else:
+                    #other options:
+                    #miss - can skip
+                    #if there is ship symbol then something is wrong
+                    break
+            if x == 1:
+                if tmpBoard.getTileByIndex(0, y) == 0:
+                    tmpBoard.setTileByIndex(0, y, 2)
+            else:
+                for i in range(x - 1, 0, -1):
+                    if tmpBoard.getTileByIndex(i,y) == 3:
+                        pass
+                    elif tmpBoard.getTileByIndex(i,y) == 0:
+                        tmpBoard.setTileByIndex(i, y, 2)
+                        break
+                    else:
+                        break
+
+            for i in range(y + 1, self.boardWidth):
+                if tmpBoard.getTileByIndex(x,i) == 3:
+                    pass
+                elif tmpBoard.getTileByIndex(x,i) == 0:
+                    tmpBoard.setTileByIndex(x, i, 2)
+                    break
+                else:
+                    break
+            if y == 1:
+                if tmpBoard.getTileByIndex(x, 0) == 0:
+                    tmpBoard.setTileByIndex(x, 0, 2)
+            else:
+                for i in range(y - 1, 0, -1):
+                    if tmpBoard.getTileByIndex(x,i) == 3:
+                        pass
+                    elif tmpBoard.getTileByIndex(x,i) == 0:
+                        tmpBoard.setTileByIndex(x, i, 2)
+                        break
+                    else:
+                        break
 
 
 
