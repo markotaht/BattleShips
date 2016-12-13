@@ -1,6 +1,4 @@
-from Assets import *
-from Util import *
-import pygame
+from Player import Player
 from Board import *
 
 class SetupShipsScreen:
@@ -15,6 +13,7 @@ class SetupShipsScreen:
         self.mediumFont = mediumFont
         self.largeFont = largeFont
 
+        self.players = {}
         self.playerReady = {}
 
         self.clear()
@@ -220,5 +219,15 @@ class SetupShipsScreen:
         return True
 
 
-    def addReadyPlayer(self, player, ready):
-        self.playerReady[player] = ready
+    def addPlayer(self, playerName):
+        #Create a new player with a board
+        board = Board()
+        board.init(self.windowSurface, self.boardWidth, self)
+
+        player = Player()
+        player.init(playerName, False, board)
+
+        self.players[playerName] = player
+
+    def setPlayerReady(self, playerName, isReady):
+        self.players[playerName].isReady = isReady

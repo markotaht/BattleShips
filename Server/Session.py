@@ -64,6 +64,7 @@ class Session(threading.Thread):
                         if player.isReady:
                             print "Old keepalive for player", player.keepAliveTime
                             print "Marking player as disconnected"
+                            #TODO: Notify everyone that the player is now inactive
                             player.connected = False
             time.sleep(1) #check only every second
 

@@ -120,7 +120,8 @@ class SessionSelectScreen:
                         for i in range(0, len(playerData), 2):
                             playerName = playerData[i]
                             playerReady = playerData[i + 1] == 'True'
-                            self.client.screen.addReadyPlayer(playerName, playerReady)
+                            self.client.screen.addPlayer(playerName)
+                            self.client.screen.setPlayerReady(playerName, playerReady)
 
 
                     else:

@@ -1,34 +1,31 @@
-from Assets import *
-from Util import *
-import pygame
+from Player import Player
 from Board import *
-from collections import defaultdict
 
 class GameScreen:
 
-    def init(self, client, windowSurface, board, isHost, isGameStarted, playerReady):
+    def init(self, client, windowSurface, board, isHost, isGameStarted, players):
         self.client = client
         self.windowSurface = windowSurface
         self.boardWidth = board.boardWidth
-        self.boards = defaultdict(Board)
         self.isGameStarted = isGameStarted;
         self.isHost = isHost
-        self.boards[self.client.username] = board
-        self.playerReady = playerReady
+
+        self.players = players
+        for player in players.keys():
+            #Update board parent fields
+            players[player].board.parent = self
+
+        #Also create a player for the local client since SetupShipsScreen doesn't do it
+        localPlayer = Player()
+        localPlayer.init(self.client.username, True, board)
+        self.players[self.client.username] = localPlayer
         board.parent = self
+
         #Active = Player whose board is being shown
         self.activePlayer = self.client.username
-        self.activeBoard = self.boards[self.client.username]
+        self.activeBoard = self.players[self.client.username].board
         #Turn = Player whose turn it actually is
         self.turnPlayer = "Waiting from server"
-
-        #Create boards for the existing players
-        for player in playerReady.keys():
-            if player != self.client.username:
-                print "Adding a board for " + player
-                playerBoard = Board()
-                playerBoard.init(windowSurface, board.boardWidth, self)
-                self.boards[player] = playerBoard
 
         self.tinyFont = tinyFont
         self.smallFont = smallFont
@@ -54,13 +51,10 @@ class GameScreen:
         self.windowSurface.blit(turnText, turnTextRect)
 
         y = 100
-        #Player list - WIP
+        #Player list
         everyoneReady = True
-        for player in self.playerReady:
-            ready = self.playerReady[player]
-
+        for player in self.players:
             x = 20
-
             if self.isHost:
                 #Add kick option
                 kickText = self.smallFont.render("KICK", True, COLOR_WHITE, COLOR_BLACK)
@@ -73,23 +67,20 @@ class GameScreen:
                     #TODO
                     print "Should kick player"
 
-
-
-            if ready:
+            if self.players[player].isReady:
                 color = COLOR_GREEN
             else:
                 color = COLOR_RED
                 everyoneReady = False
-            playerText = self.smallFont.render(player, True, color)
 
+            playerText = self.smallFont.render(player, True, color)
             playerTextRect = playerText.get_rect()
             playerTextRect.left = x
             playerTextRect.top = y
-            y += 40
             self.windowSurface.blit(playerText, playerTextRect)
+            y += 40
 
-        if everyoneReady and self.isHost and len(self.boards) > 1:
-            #
+        if everyoneReady and self.isHost and len(self.players) > 1:
             if not self.isGameStarted:
                 startGameText = self.mediumFont.render("Start game", True, COLOR_WHITE, COLOR_BLACK)
                 startGameTextRect = startGameText.get_rect()
@@ -132,34 +123,29 @@ class GameScreen:
         currentBoardTextRect.top = 425
         self.windowSurface.blit(currentBoardText, currentBoardTextRect)
 
-
-
-
         self.activeBoard.update(events)
 
 
     def previousBoard(self):
-        #Returns a list of tuples (playerName, board)
-        players = self.boards.items()
+        players = self.players.keys()
 
         for i in range(0, len(players)):
-            if players[i][0] == self.activePlayer:
+            if players[i] == self.activePlayer:
                 if i > 0:
-                    self.setActivePlayer(players[i - 1][0])
+                    self.setActivePlayer(players[i - 1])
                 else:
-                    self.setActivePlayer(players[len(players) - 1][0])
+                    self.setActivePlayer(players[len(players) - 1])
                 break
 
     def nextBoard(self):
-        #Returns a list of tuples (playerName, board)
-        players = self.boards.items()
+        players = self.players.keys()
 
         for i in range(0, len(players)):
-            if players[i][0] == self.activePlayer:
+            if players[i] == self.activePlayer:
                 if i + 1 < len(players):
-                    self.setActivePlayer(players[i + 1][0])
+                    self.setActivePlayer(players[i + 1])
                 else:
-                    self.setActivePlayer(players[0][0])
+                    self.setActivePlayer(players[0])
                 break
 
     #Called by the board whenever there's a click
@@ -186,28 +172,25 @@ class GameScreen:
                 else:
                     print "click on your board "+ str(tileX) + " " + str(tileY)
 
-    def addPlayer(self, name, board):
-        self.boards[name] = board
-        #TODO: Update this value properly
-        self.playerReady[name] = False
+    def addPlayer(self, playerName):
+        #Create a new player with a board
+        board = Board()
+        board.init(self.windowSurface, self.boardWidth, self)
 
-    # Player should be a string, "__me__" for local player
+        player = Player()
+        player.init(playerName, False, board)
+
+        self.players[playerName] = player
+
+    def setPlayerReady(self, playerName, isReady):
+        self.players[playerName].isReady = isReady
+
+    # Player should be a string
     def setActivePlayer(self, player):
         self.activePlayer = player
-        self.activeBoard = self.boards[player]
+        self.activeBoard = self.players[player].board
 
-    # Player should be a string, "__me__" if local player's turn
+    # Player should be a string
     def setTurnPlayer(self, player):
         self.turnPlayer = player
 
-    #Marks player as ready
-    #TODO this is also used when player joins game, better use addPlayer?
-    def addReadyPlayer(self, player, ready):
-        self.playerReady[player] = ready
-
-        if player not in self.boards:
-            if player != self.client.username:
-                print "Adding a board for " + player
-                playerBoard = Board()
-                playerBoard.init(self.windowSurface, self.boardWidth, self)
-                self.boards[player] = playerBoard

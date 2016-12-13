@@ -59,6 +59,7 @@ class Client(object):
                 except AttributeError:
                     # ignore if player has not joined a session
                     print "Trying to send keepalive but player has not joined a session"
+
     def loadMainMenuScreen(self):
         self.screen = MainMenuScreen()
         self.screen.init(self, self.windowSurface)
@@ -80,13 +81,13 @@ class Client(object):
 
     #Board should contain your placed ships
     def loadGameScreen(self, board, isHost):
-        # NOTE: This expects the current screen to be setupships screen when called
-        playerReady = self.screen.playerReady
+        #Get the palyers from setup ships screen
+        players = self.screen.players
         self.screen = GameScreen()
-        #TODO: Implement correct arguments depending on scenario
-        isGameStarted = False
 
-        self.screen.init(self, self.windowSurface, board, isHost, isGameStarted, playerReady)
+        #TODO: Implement correct value
+        isGameStarted = False
+        self.screen.init(self, self.windowSurface, board, isHost, isGameStarted, players)
 
 
     def connect(self, serverName, mqAddress):
@@ -156,10 +157,10 @@ class Client(object):
                     if parts[5] == "HIT":
                         #we were hit and we should see our ship attacked
                         #show that we were hit
-                        self.screen.boards[self.username].setTileByIndex(int(parts[3]), int(parts[4]), 3)
+                        self.screen.players[self.username].board.setTileByIndex(int(parts[3]), int(parts[4]), 3)
                         #show the attacker (strange, as we know who's turn it was)
                     else:
-                        self.screen.boards[self.username].setTileByIndex(int(parts[3]), int(parts[4]), 2)
+                        self.screen.players[self.username].board.setTileByIndex(int(parts[3]), int(parts[4]), 2)
                 if parts[1] != "SUNK" and parts[2] != self.username:
                     return
                 print body
@@ -175,14 +176,14 @@ class Client(object):
             elif parts[0] == "READY":
                 print "Client - Player %s is ready" % parts[1]
                 try:
-                    self.screen.addReadyPlayer(parts[1], True)
+                    self.screen.setPlayerReady(parts[1], True)
                 except AttributeError:
                     print "Attribute error on %s" % parts[1]
                     # IF we are the player
                     pass
             elif parts[0] == "NEWPLAYER":
                 print "%s joined the game" % parts[1]
-                self.screen.addReadyPlayer(parts[1], False)
+                self.screen.addPlayer(parts[1])
 
             else:
                 print "not known message %s", body
@@ -225,135 +226,7 @@ class Client(object):
                 self.initlisteners()
             return self.response
         return communicate
-"""
-    def bomb(self, x,y,player):
-        n = str(x)+ ":" + str(y) + ":" + player + ":" + self.username
-        self.response = None
-        self.corr_id = str(uuid.uuid4())
-        self.bombShipChannel.basic_publish(exchange='',
-                                   routing_key=self.roomprefix+'rpc_bomb',
-                                   properties=pika.BasicProperties(
-                                         reply_to = self.callback_queue2,
-                                         correlation_id = self.corr_id,
-                                         ),
-                                   body=str(n))
-        while self.response is None:
-            self.syncConnection.process_data_events()
-        return self.response
-
-    def placeShip(self,x,y,orientation):
-        n = str(x) + ":" + str(y) + ":" + self.username
-        self.response = None
-        self.corr_id = str(uuid.uuid4())
-        self.placeShipChannel.basic_publish(exchange='',
-                                   routing_key=self.roomprefix+'rpc_place_ship',
-                                   properties=pika.BasicProperties(
-                                       reply_to=self.callback_queue,
-                                       correlation_id=self.corr_id,
-                                   ),
-                                   body=str(n))
-        while self.response is None:
-            self.placeShipConnecion.process_data_events()
-        return self.response
-
-    def startGame(self):
-        n = "start"
-        self.response5 = None
-        self.corr_id5 = str(uuid.uuid4())
-        self.startGameChannel.basic_publish(exchange='',
-                                   routing_key=self.roomprefix+'rpc_start',
-                                   properties=pika.BasicProperties(
-                                       reply_to=self.callback_queue5,
-                                       correlation_id=self.corr_id5,
-                                   ),
-                                   body=str(n))
-        while self.response5 is None:
-            self.startGameConnection.process_data_events()
-        return self.response5
-
-    def finishedPlacing(self):
-        n = "You finished placing your ships."
-        self.response6 = None
-        self.corr_id6 = str(uuid.uuid4())
-        self.finishedPlacingChannel.basic_publish(exchange='',
-                                   routing_key=self.roomprefix+'rpc_finished_placing',
-                                   properties=pika.BasicProperties(
-                                       reply_to=self.callback_queue6,
-                                       correlation_id=self.corr_id6,
-                                   ),
-                                   body=str(n))
-        while self.response6 is None:
-            self.finishedPlacingConnection.process_data_events()
-        return self.response6
-
-
-        def createRoom(self,name):
-            n = name+ ":"+ self.username
-            self.response = None
-            self.corr_id = str(uuid.uuid4())
-            self.createRoomChannel.basic_publish(exchange='',
-                                       routing_key=self.server+"."+'rpc_createSession',
-                                       properties=pika.BasicProperties(
-                                           reply_to=self.callback_queue3,
-                                           correlation_id=self.corr_id,
-                                       ),
-                                       body=str(n))
-            while self.response is None:
-                self.syncConnection.process_data_events()
-
-            self.room = self.response.split(":")[1]
-            self.initlisteners()
-            return self.response
-
-    def joinRoom(self,name):
-        n = name+":"+self.username
-        self.response = None
-        self.corr_id = str(uuid.uuid4())
-        self.joinRoomChannel.basic_publish(exchange='',
-                                   routing_key=self.server+"."+'rpc_joinSession',
-                                   properties=pika.BasicProperties(
-                                       reply_to=self.callback_queue4,
-                                       correlation_id=self.corr_id,
-                                   ),
-                                   body=str(n))
-        while self.response is None:
-            self.syncConnection.process_data_events()
-
-        self.room = self.response.split(":")[1]
-        self.initlisteners()
-        return self.response
-"""
 
 #Run the client when class is entry point
 if __name__ == "__main__":
     client = Client()
-
-    #TODO: Old tests that don't currently run anymore, fix them
-
-    #print(" [x] Requesting place")
-    #response = client.placeShip(0, 0, orient, "ME")
-    #print(" [.] Got %r" % response)
-    #
-    # print(" [x] Requesting bomb")
-    # response = client.bomb(0, 0, "target", "ME")
-    #
-    # print(" [.] Got %r" % response)
-    # print(" [x] Requesting session")
-    # response = client.createSession("Test", "ME")
-    #
-    # print(" [.] Got %r" % response)
-    # print(" [x] Joining room")
-    # response = client.joinSession("Test", "ME")
-    #
-    # print(" [.] Got %r" % response)
-    # print(" [x] startgame session")
-    # response = client.startGame()
-    #
-    # print(" [.] Got %r" % response)
-    # print(" [x] finish shipping room")
-    # response = client.finishedPlacing("ME")
-    # print(" [.] Got %r" % response)
-    #
-    # print(" [x] Get sessions")
-    # response = client.getSessions("")
-    # print(" [.] Got %r" % response)
