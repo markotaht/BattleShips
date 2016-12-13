@@ -153,10 +153,13 @@ class Client(object):
             if parts[0] == "BOMB":
                 print "bomba",parts
                 if parts[1] == self.username:
-                    #we were hit and we should see our ship attacked
-                    #show that we were hit
-                    self.screen.boards[self.username].setTileByIndex(int(parts[3]), int(parts[4]), 3)
-                    #show the attacker (strange, as we know who's turn it was)
+                    if parts[5] == "HIT":
+                        #we were hit and we should see our ship attacked
+                        #show that we were hit
+                        self.screen.boards[self.username].setTileByIndex(int(parts[3]), int(parts[4]), 3)
+                        #show the attacker (strange, as we know who's turn it was)
+                    else:
+                        self.screen.boards[self.username].setTileByIndex(int(parts[3]), int(parts[4]), 2)
                 if parts[1] != "SUNK" and parts[2] != self.username:
                     return
                 print body
