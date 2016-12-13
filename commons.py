@@ -4,7 +4,7 @@ import pika
 def createRPCListener(parent, queue,callback,globalmessage=False,host='localhost'):
 
     def receiver(ch, method, props, body):
-        response,globmessage = callback(body)
+        response,gmessage = callback(body)
 
         ch.basic_publish(exchange='',
                          routing_key=props.reply_to,
@@ -16,7 +16,7 @@ def createRPCListener(parent, queue,callback,globalmessage=False,host='localhost
         if globalmessage:
             parent.updateChannel.basic_publish(exchange=parent.prefix + 'updates',
                                              routing_key='',
-                                             body=globmessage)
+                                             body=gmessage)
 
     __receiver = receiver
     def listener(self):
