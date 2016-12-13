@@ -175,7 +175,6 @@ class GameScreen:
                             response = self.client.bomb(request)
                             print "Bomb response", response
                             #TODO additional game logic needed here?
-                            #todo also check that you are not clicking on already occupied piece
                             if response == "HIT" or response == "SUNK":
                                 self.activeBoard.setTileByIndex(tileX, tileY, 3)
                             if response == "MISS":

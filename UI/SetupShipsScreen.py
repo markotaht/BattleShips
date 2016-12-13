@@ -26,8 +26,6 @@ class SetupShipsScreen:
     def clear(self):
         self.board = Board()
         self.board.init(self.windowSurface, self.boardWidth, self)
-        if self.client.username in self.players:
-            self.players[self.client.username].board = self.board
 
         #Contains arrays in the form[shipSize, amount]
         self._availableShips = []
@@ -35,6 +33,7 @@ class SetupShipsScreen:
         self._placedShips = []
         self._verticalPlacement = True
 
+        #when changing this also update session.getShipCount
         if self.boardWidth == 4:
             self._selectedSize = 2
             self._availableShips.append([2, 2]);
@@ -67,6 +66,9 @@ class SetupShipsScreen:
             self._availableShips.append([1, 5]);
         else:
             print "Warning! Unsupported board size."
+
+        if self.client.username in self.players:
+            self.players[self.client.username].board = self.board
 
     def update(self, events):
 

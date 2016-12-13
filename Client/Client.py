@@ -9,8 +9,6 @@ from UI.Assets import *
 
 from types import MethodType
 from time import time
-from pika.exceptions import ConnectionClosed
-from pika.exceptions import ChannelClosed
 
 class Client(object):
     def __init__(self):
@@ -146,6 +144,7 @@ class Client(object):
             if body == "START":
                 print "Game has been started by the host!"
                 self.screen.isGameStarted = True
+
                 return
             elif body == "IGNORE":
                 print "Ignore global message!"
@@ -168,7 +167,6 @@ class Client(object):
                 self.screen.markAsSunk(parts[1], parts[5])
                 print "SUNK", parts
             elif parts[0] == "NEXT":
-                print parts[1], self.username
                 self.screen.setTurnPlayer(parts[1])
                 if parts[1] == self.username:
                     print "My turn"

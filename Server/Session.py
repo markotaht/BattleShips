@@ -24,9 +24,10 @@ class Session(threading.Thread):
         self.players = {}
         self.order = []
         self.boardWidth = boardWidth
+        self.shipCount = self.getShipCount(boardWidth)
         self.dead = []
         self.state = "INIT"
-        self.playerturn = 0
+        self.playerturn = 1
         self.shots = 0
 
         self.initChannels()
@@ -42,8 +43,8 @@ class Session(threading.Thread):
                 keepAliveTime = time.time()
 
                 player = Player()
-                player.init(name, isHost, False, keepAliveTime, board)
 
+                player.init(name, isHost, False, keepAliveTime, board, self.shipCount)
                 self.players[name] = player
                 self.order.append(name)
 
@@ -267,11 +268,20 @@ class Session(threading.Thread):
         #TODO teha paremaks ja lisada juurde laeva edastamine koigile
         if response == "HIT" and self.checkSunk(int(x),int(y),player):
             hitcoords = self.getSunkDetails(int(x),int(y),player)
-            print hitcoords
             #pack for sending into x1;y1, x2;y2...
             hitcoords = ",".join([str(a[0])+";"+str(a[1]) for a in hitcoords])
-            print hitcoords
             message = ":".join(["SUNK",player, attacker,x,y, str(hitcoords)])
+            #update player's ship count
+            if self.players[player].shipsRemaining != 1:
+                self.players[player].shipsRemaining -= 1
+            else:
+                self.players[player].shipsRemaining = 0
+                self.players[player].isAlive = False
+                self.order.remove(player)
+                self.dead.append(player)
+                self.checkWin()
+                print "%s is dead"%player
+                #TODO update also player that he is dead
             response = "SUNK"
         else:
             message = ":".join(["BOMB",player,attacker,x,y,response])
@@ -330,3 +340,19 @@ class Session(threading.Thread):
         #TODO check why it fails with OK
         #fails with ok as it does not contain :, dno why
         return "O:K", ""
+
+    def getShipCount(self, boardWidth):
+        if boardWidth == 4 or boardWidth == 6:
+            return 4
+        elif boardWidth == 8:
+            return 7
+        elif boardWidth == 10:
+            return 11
+        elif boardWidth == 12:
+            return 16
+        else:
+            print "Warning! Unsupported board size."
+
+    def checkWin(self):
+        if len(self.order) == 1:
+            print "%s WON!"%self.order[0]
