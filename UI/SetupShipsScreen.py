@@ -157,7 +157,8 @@ class SetupShipsScreen:
         success = self.tryPlaceShip(tileX, tileY)
 
         if success:
-            #Reduce the selected ship amount
+            placedSize = self._selectedSize
+            # Reduce the selected ship amount
             for ship in self._availableShips:
                 shipSize = ship[0]
                 shipAmount = ship[1]
@@ -169,11 +170,12 @@ class SetupShipsScreen:
                         self._selectedSize = 0
                     else:
                         ship[1] = shipAmount - 1
+                    #automatically take next shipsize if no ships left
                     if self._selectedSize == 0:
                         if len(self._availableShips) > 0:
                             self._selectedSize = self._availableShips[0][0]
 
-            self._placedShips.append([tileX, tileY, self._verticalPlacement, self._selectedSize])
+            self._placedShips.append([tileX, tileY, self._verticalPlacement, placedSize])
             #Siin vist lisada
             #self.client.placeShip(x,y,dir,"ME")
 

@@ -125,7 +125,6 @@ class Session(threading.Thread):
             board = self.boards[name]
 
             for ship in ships:
-                print(ship)
                 ship = ship.split(";")
                 tileX = int(ship[0])
                 tileY = int(ship[1])
@@ -179,19 +178,18 @@ class Session(threading.Thread):
 
     def checkHit(self,x,y,player):
         print self.boards[player]
-        if self.boards[player][y][x] == 1:
+        if self.boards[player][x][y] == 1:
             return "HIT"
         return "MISS"
 
     def sunk(self,x,y,player):
         #TODO lisada juurde et kas on laev loppenud voi mitte
         #TODO not used yet
-        return False
         for i in range(x-1,0,-1):
             if self.boards[player][y][x] == 1:
                 return False
 
-        for i in range(x+1,self.boardWidth[0]):
+        for i in range(x+1,self.boardWidth):
             if self.boards[player][y][x] == 1:
                 return False
 
@@ -217,7 +215,7 @@ class Session(threading.Thread):
             message = ":".join(["SUNK",x,y,player])
         else:
             message = ":".join(["BOMB",response,player,x,y])
-
+        print message
         #TODO see kuidagi teisiti vb handlida
         self.shots -= 1
         if self.shots == 0:

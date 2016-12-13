@@ -176,7 +176,7 @@ class GameScreen:
                     response = self.client.bomb(request)
                     print "Bomb response", response
                     #TODO additional game logic needed here?
-                    if response == "HIT":
+                    if response  == "HIT":
                         self.activeBoard.setTileByIndex(tileX, tileY, 3)
                     elif response == "SUNK":
                         print "This is not handled yet"
