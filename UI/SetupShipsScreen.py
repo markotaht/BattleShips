@@ -18,9 +18,16 @@ class SetupShipsScreen:
 
         self.clear()
 
+        #Also create a player for the local client since SetupShipsScreen doesn't do it
+        localPlayer = Player()
+        localPlayer.init(self.client.username, True, self.board)
+        self.players[self.client.username] = localPlayer
+
     def clear(self):
         self.board = Board()
         self.board.init(self.windowSurface, self.boardWidth, self)
+        if self.client.username in self.players:
+            self.players[self.client.username].board = self.board
 
         #Contains arrays in the form[shipSize, amount]
         self._availableShips = []
