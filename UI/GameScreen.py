@@ -15,12 +15,6 @@ class GameScreen:
             #Update board parent fields
             players[player].board.parent = self
 
-        #Also create a player for the local client since SetupShipsScreen doesn't do it
-        localPlayer = Player()
-        localPlayer.init(self.client.username, True, board)
-        self.players[self.client.username] = localPlayer
-        board.parent = self
-
         #Active = Player whose board is being shown
         self.activePlayer = self.client.username
         self.activeBoard = self.players[self.client.username].board
