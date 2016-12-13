@@ -24,10 +24,11 @@ class GameScreen:
 
         #Create boards for the existing players
         for player in playerReady.keys():
-            print "Adding a board for " + player
-            playerBoard = Board()
-            playerBoard.init(windowSurface, board.boardWidth, self)
-            self.boards[player] = playerBoard
+            if player != self.client.username:
+                print "Adding a board for " + player
+                playerBoard = Board()
+                playerBoard.init(windowSurface, board.boardWidth, self)
+                self.boards[player] = playerBoard
 
         self.tinyFont = tinyFont
         self.smallFont = smallFont
@@ -196,8 +197,9 @@ class GameScreen:
     def addReadyPlayer(self, player, ready):
         self.playerReady[player] = ready
 
-        if player in self.boards == False:
-            print "Adding a board for " + player
-            playerBoard = Board()
-            playerBoard.init(self.windowSurface, self.board.boardWidth, self)
-            self.boards[player] = playerBoard
+        if player not in self.boards:
+            if player != self.client.username:
+                print "Adding a board for " + player
+                playerBoard = Board()
+                playerBoard.init(self.windowSurface, self.boardWidth, self)
+                self.boards[player] = playerBoard

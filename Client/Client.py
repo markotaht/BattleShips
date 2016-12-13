@@ -116,7 +116,7 @@ class Client(object):
         self.placeShip = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_place_ship'), self, Client)
         self.bomb = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_bomb'), self, Client)
         self.startGame = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_start'), self, Client)
-        self.updateKeepAlive = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_update_keep_alive', True), self, Client)
+        self.updateKeepAlive = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_update_keep_alive'), self, Client)
 
 
     def initServerListeners(self):
@@ -127,74 +127,57 @@ class Client(object):
 
     #Stuff for asynccalls
     def listenForUpdates(self, connection):
-        try:
-            channel = connection.channel()
+        channel = connection.channel()
 
+        channel.exchange_declare(exchange=self.sessionIdentifier + 'updates',
+                                 type='fanout')
 
-            channel.exchange_declare(exchange=self.sessionIdentifier + 'updates',
-                                     type='fanout')
+        result = channel.queue_declare(exclusive=True)
+        queue_name = result.method.queue
 
-            result = channel.queue_declare(exclusive=True)
-            queue_name = result.method.queue
+        channel.queue_bind(exchange=self.sessionIdentifier + 'updates',
+                           queue=queue_name)
 
-            channel.queue_bind(exchange=self.sessionIdentifier + 'updates',
-                               queue=queue_name)
+        print(' [*] Waiting for updates. To exit press CTRL+C')
 
-            print(' [*] Waiting for updates. To exit press CTRL+C')
-
-            def callback(ch, method, properties, body):
-                if body == "START":
-                    print "Game has been started by the host!"
-                    self.screen.isGameStarted = True
+        def callback(ch, method, properties, body):
+            if body == "START":
+                print "Game has been started by the host!"
+                self.screen.isGameStarted = True
+                return
+            elif body == "IGNORE":
+                print "Ignore global message!"
+                return
+            parts = body.split(":")
+            if parts[0] == "BOMB":
+                if parts[1] != "SINK" and parts[2] != self.username:
                     return
-                elif body == "IGNORE":
-                    print "Ignore global message!"
-                    return
-                parts = body.split(":")
-                if parts[0] == "BOMB":
-                    if parts[1] != "SINK" and parts[2] != self.username:
-                        return
-                    print body
-                elif parts[0] == "NEXT":
-                    if parts[1] == self.username:
-                        print "My turn"
-                    else:
-                        print "Not my turn yet"
-                elif parts[0] == "READY":
-                    print "Client - Player %s is ready"%parts[1]
-                    try:
-                        self.screen.addReadyPlayer(parts[1], True)
-                    except AttributeError:
-                        print "Attribute error on %s"%parts[1]
-                        #IF we are the player
-                        pass
-                elif parts[0] == "NEWPLAYER":
-                    print "%s joined the game"%parts[1]
-                    try:
-                        self.screen.addReadyPlayer(parts[1], False)
-                    except AttributeError:
-                        print "Attribute error on %s" % parts[1]
-                        #IF we are the player
-                        pass
+                print body
+            elif parts[0] == "NEXT":
+                if parts[1] == self.username:
+                    print "My turn"
                 else:
-                    print "not known message %s", body
+                    print "Not my turn yet"
+            elif parts[0] == "READY":
+                print "Client - Player %s is ready" % parts[1]
+                try:
+                    self.screen.addReadyPlayer(parts[1], True)
+                except AttributeError:
+                    print "Attribute error on %s" % parts[1]
+                    # IF we are the player
+                    pass
+            elif parts[0] == "NEWPLAYER":
+                print "%s joined the game" % parts[1]
+                self.screen.addReadyPlayer(parts[1], False)
 
-            channel.basic_consume(callback,
-                                  queue=queue_name,
-                                  no_ack=True)
+            else:
+                print "not known message %s", body
 
-            channel.start_consuming()
-        except ConnectionClosed:
-            #TODO check why these arise with keepalives
-            print "ConnectionClosed exception"
-        except ChannelClosed:
-            print "ChannelClosed exception"
-        except KeyError:
-            print "KeyError caught"
-        except AssertionError:
-            print "Assertion Error"
-        except Exception :
-            print "Unknown Exception!"
+        channel.basic_consume(callback,
+                              queue=queue_name,
+                              no_ack=True)
+
+        channel.start_consuming()
 
 
     #Stuff for RPC/MQ
