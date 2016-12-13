@@ -172,9 +172,16 @@ class GameScreen:
         if self.isGameStarted:
             if self.turnPlayer == self.client.username:
                 if self.activePlayer != self.client.username:
-                    request = ":".join([str(tileX),str(tileY), self.client.username, "default"])
-                    #response = self.client.bomb(request)
-                    print "Bomb placeholder"
+                    request = ":".join([str(tileX),str(tileY), self.activePlayer, self.client.username])
+                    response = self.client.bomb(request)
+                    print "Bomb response", response
+                    #TODO additional game logic needed here?
+                    if response == "HIT":
+                        self.activeBoard.setTileByIndex(tileX, tileY, 3)
+                    elif response == "SUNK":
+                        print "This is not handled yet"
+                    else:
+                        self.activeBoard.setTileByIndex(tileX, tileY, 2)
                 else:
                     print "click on your board "+ str(tileX) + " " + str(tileY)
 

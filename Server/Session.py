@@ -114,7 +114,7 @@ class Session(threading.Thread):
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                              routing_key='',
                                              body="READY:%s" % name)
-            print "Server - %s is ready"%name
+            print "Session - %s is ready"%name
             return "OK", "READY:" + name
         else:
             return "FAIL", ""
@@ -178,34 +178,39 @@ class Session(threading.Thread):
 
 
     def checkHit(self,x,y,player):
-        if self.fields[player][y][x] == 1:
+        print self.boards[player]
+        if self.boards[player][y][x] == 1:
             return "HIT"
         return "MISS"
 
     def sunk(self,x,y,player):
         #TODO lisada juurde et kas on laev loppenud voi mitte
+        #TODO not used yet
+        return False
         for i in range(x-1,0,-1):
-            if self.fields[player][y][x] == 1:
+            if self.boards[player][y][x] == 1:
                 return False
 
-        for i in range(x+1,self.fieldSize[0]):
-            if self.fields[player][y][x] == 1:
+        for i in range(x+1,self.boardWidth[0]):
+            if self.boards[player][y][x] == 1:
                 return False
 
         for i in range(y-1,0,-1):
-            if self.fields[player][y][x] == 1:
+            if self.boards[player][y][x] == 1:
                 return False
 
         for i in range(y+1):
-            if self.fields[player][y][x] == 1:
+            if self.boards[player][y][x] == 1:
                 return False
         return True
 
     def bombShipCallback(self,request):
-        x, y, player, attacker = request.slit(":")
+        print request
+        x, y, player, attacker = request.split(":")
 
-        print(" [.] bomb(%s,%s, %s)" %x,y,player)
-        response = self.checkHit(int(x),int(y),player,attacker)
+        print(" [.] bomb(%s,%s, %s, %s)" %(x,y,player, attacker))
+        response = self.checkHit(int(x),int(y),player)
+        print response
 
         #TODO teha paremaks ja lisada juurde laeva edastamine koigile
         if self.sunk(int(x),int(y),player):
@@ -230,7 +235,7 @@ class Session(threading.Thread):
         print "%s's turn"%self.order[self.playerturn]
 
     def __placeShipOnField(self,x,y,dir,name):
-        self.fields[name][y][x] = 1
+        self.board[name][y][x] = 1
         #Something something direction
 
     def placeShipCallback(self, request):

@@ -1,6 +1,7 @@
 from Assets import *
 from Util import *
 from external import eztext
+import random
 
 
 class MainMenuScreen:
@@ -81,7 +82,7 @@ class MainMenuScreen:
                         if(len(self._nameTextBox.value) > 0):
                             self.client.username = self._nameTextBox.value
                         else:
-                            self.client.username = "Default"
+                            self.client.username = "Player " + str(random.randrange(0, 10000))
                     self._nameTextBox.focus = False
                     self._nameTextBox.color = COLOR_BLACK
                     break
