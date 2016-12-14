@@ -253,6 +253,7 @@ class GameScreen:
         shiphit = shiphit.split(",")
         #mark ship as sunk
         tmpBoard = self.players[attackedPlayer].board
+        #draw sunk ship
         for i in shiphit:
             tmp = i.split(";")
             x = int(tmp[0])

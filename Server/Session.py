@@ -384,7 +384,10 @@ class Session(threading.Thread):
                 shiphit.append((i,y))
             else:
                 break
-
+        #corner case 1
+        if x == 1:
+            if tmpBoard[0][y] == 3:
+                shiphit.append((0, y))
         for i in range(x - 1, 0, -1):
             if tmpBoard[i][y] == 3:
                 shiphit.append((i,y))
@@ -396,13 +399,16 @@ class Session(threading.Thread):
                 shiphit.append((x,i))
             else:
                 break
-
+        #corner case 2
+        if y == 1:
+            if tmpBoard[0][y] == 3:
+                shiphit.append((x, 0))
         for i in range(y - 1, 0, -1):
+            print "4", x, i
             if tmpBoard[x][i] == 3:
                 shiphit.append((x,i))
             else:
                 break
-
         return shiphit
 
 
@@ -429,7 +435,7 @@ class Session(threading.Thread):
                 self.players[victim].shipsRemaining = 0
                 self.killPlayer(victim, attacker)
                 self.shots -= 1
-
+                print "shots remaining", self.shots
                 print "%s is dead"%victim
                 #TODO update also player that he is dead
             response = "SUNK"
