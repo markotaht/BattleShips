@@ -186,6 +186,17 @@ class Client(object):
             elif parts[0] == "DISCONNECTED":
                 print "Marking %s as disconnected" % parts[1]
                 self.screen.players[parts[1]].connected = False
+            elif parts[0] == "OVER":
+                print "Game over, %s won"%parts[1]
+                self.screen.isGameStarted = False
+                self.screen.setWinnerStr(parts[1])
+            elif parts[0] == "DEAD":
+                print "%s is dead"%parts[1]
+                self.screen.killPlayer(parts[1])
+                if parts[1] == self.username:
+                    self.screen.deadStr = "Killed by %s"%parts[2]
+
+
             else:
                 print "not known message %s", body
 

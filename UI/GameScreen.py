@@ -7,7 +7,7 @@ class GameScreen:
         self.client = client
         self.windowSurface = windowSurface
         self.boardWidth = board.boardWidth
-        self.isGameStarted = isGameStarted;
+        self.isGameStarted = isGameStarted
         self.isHost = isHost
 
         self.players = players
@@ -20,6 +20,8 @@ class GameScreen:
         self.activeBoard = self.players[self.client.username].board
         #Turn = Player whose turn it actually is
         self.turnPlayer = "Waiting from server"
+        self.winnerStr = ""
+        self.deadStr = ""
 
         self.tinyFont = tinyFont
         self.smallFont = smallFont
@@ -32,17 +34,39 @@ class GameScreen:
 
         if self.isGameStarted == False:
             turnStr = "Waiting for players..."
+            #Show winner if there is one
+            winnerText = self.mediumFont.render(self.winnerStr, True, COLOR_BLACK)
+            winnerTextRect = winnerText.get_rect()
+            winnerTextRect.left = 20
+            winnerTextRect.bottom = 380
+            self.windowSurface.blit(winnerText, winnerTextRect)
         else:
             if self.turnPlayer == self.client.username:
                 turnStr = "Your turn"
             else:
                 turnStr = self.turnPlayer + "'s turn"
 
+        #Show this when you are dead
+        deadText = self.mediumFont.render(self.deadStr, True, COLOR_BLACK)
+        deadTextRect = deadText.get_rect()
+        deadTextRect.left = 20
+        deadTextRect.bottom = 350
+        self.windowSurface.blit(deadText, deadTextRect)
+
         turnText = self.mediumFont.render(turnStr, True, COLOR_BLACK)
         turnTextRect = turnText.get_rect()
         turnTextRect.left = 10
         turnTextRect.top = 10
         self.windowSurface.blit(turnText, turnTextRect)
+
+        #disconnect button
+        disconnectText = self.mediumFont.render("Disconnect", True, COLOR_WHITE, COLOR_BLACK)
+        disconnectTextRect = disconnectText.get_rect()
+        disconnectTextRect.left = 300
+        disconnectTextRect.top = 10
+        self.windowSurface.blit(disconnectText, disconnectTextRect)
+        if clickedOnRect(disconnectTextRect, events):
+            print("Disconnect placeholder...")
 
         y = 100
         #Player list
@@ -316,3 +340,13 @@ class GameScreen:
             #Reset the hasBeenShot field
             for player in self.players.keys():
                 self.players[player].hasBeenShot = False
+
+    def killPlayer(self, player):
+        self.players[player].isAlive = False
+        print "killed %s"%player
+
+    def setWinnerStr(self, winner):
+        if winner == self.client.username:
+            self.winnerStr = "YOU WIN!"
+        else:
+            self.winnerStr = winner + " WON!"

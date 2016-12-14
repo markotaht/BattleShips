@@ -275,11 +275,9 @@ class Session(threading.Thread):
             if self.players[player].shipsRemaining != 1:
                 self.players[player].shipsRemaining -= 1
             else:
-                self.players[player].shipsRemaining = 0
-                self.players[player].isAlive = False
-                self.order.remove(player)
-                self.dead.append(player)
-                self.checkWin()
+                self.killPlayer(player, attacker)
+                self.shots -= 1
+
                 print "%s is dead"%player
                 #TODO update also player that he is dead
             response = "SUNK"
@@ -320,7 +318,6 @@ class Session(threading.Thread):
                                              routing_key='',
                                              body="START")
             #Also notify that host is first
-            #TODO actually not working and can be skipped as host is first?
             message = ":".join(["NEXT", self.order[0]])
             print ""
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
@@ -356,3 +353,17 @@ class Session(threading.Thread):
     def checkWin(self):
         if len(self.order) == 1:
             print "%s WON!"%self.order[0]
+            self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                             routing_key='',
+                                             body="OVER:"+self.order[0])
+
+    def killPlayer(self, player, killer):
+        self.players[player].shipsRemaining = 0
+        self.players[player].isAlive = False
+        self.order.remove(player)
+        self.dead.append(player)
+        print "%s is dead"%player
+        self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                         routing_key='',
+                                         body="DEAD:" + player + ":" + killer)
+        self.checkWin()
