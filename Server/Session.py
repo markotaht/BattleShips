@@ -131,14 +131,14 @@ class Session(threading.Thread):
         self.order.remove(request)
         self.players.pop(request,None)
 
-        return "OK","DISCONNECT:"+request
+        return "OK","LEFT:"+request
 
         return
     def kickPlayerCallback(self, request):
         print(" [.] kickPlayer(%s)" % request)
         self.order.remove(request)
         self.players.pop(request,None)
-        return "OK", "DISCONNECT:"+request
+        return "OK", "LEFT:"+request
 
 
     def finishedPlacingCallback(self,request):

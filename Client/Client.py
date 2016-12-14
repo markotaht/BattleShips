@@ -204,8 +204,8 @@ class Client(object):
                 if parts[1] == self.username:
                     self.screen.deadStr = "Killed by %s"%parts[2]
             #Player left because he/she wated to
-            elif parts[0] == "DISCONNECT":
-                #TODO Review player leaving
+            elif parts[0] == "LEFT":
+                #TODO Review player leaving on his own will
                 self.screen.players.pop(parts[1],None)
             else:
                 print "not known message "+body
