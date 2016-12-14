@@ -25,9 +25,6 @@ class SessionSelectScreen:
 
     def update(self, events):
 
-        if escapePressed(events):
-            self.client.loadMainMenuScreen()
-
         if hasattr(self, "_last"):
             self._last += 1
             #Update sessions every 1s
