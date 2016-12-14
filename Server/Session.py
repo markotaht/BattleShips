@@ -226,27 +226,112 @@ class Session(threading.Thread):
         for i in range(x+1, self.boardWidth):
             if tmpBoard[i][y] == 1:
                 return False #Return false if we find ship
-            elif tmpBoard[i][y] == 0:
+            elif tmpBoard[i][y] == 0 or tmpBoard[i][y] == 2:
                 break #dont continue if nothing there
 
         for i in range(x-1, -1, -1):
             if tmpBoard[i][y] == 1:
                 return False
-            elif tmpBoard[i][y] == 0:
+            elif tmpBoard[i][y] == 0 or tmpBoard[i][y] == 2:
                 break
 
 
         for i in range(y+1, self.boardWidth):
             if tmpBoard[x][i] == 1:
                 return False
-            elif tmpBoard[x][i] == 0:
+            elif tmpBoard[x][i] == 0 or tmpBoard[i][y] == 2:
                 break
 
         for i in range(y-1, -1, -1):
             if tmpBoard[x][i] == 1:
                 return False
-            elif tmpBoard[x][i] == 0:
+            elif tmpBoard[x][i] == 0 or tmpBoard[i][y] == 2:
                 break
+
+        #TODO vaja mingit lisa loogikat et koikidele panna need tapid laeva umber
+        for i in range(x, self.boardWidth):
+            if tmpBoard[i][y] == 3:
+                tmpBoard[i - 1][y+1] =2
+                tmpBoard[i - 1][y-1] = 2
+                tmpBoard[i + 1][y+1] = 2
+                tmpBoard[i + 1][y-1] = 2
+
+                if tmpBoard[i][y-1] != 3:
+                    tmpBoard[i][y-1] = 3
+
+                if tmpBoard[i][y + 1] != 3:
+                    tmpBoard[i][y+1] = 3
+
+                if tmpBoard[i-1][y] != 3:
+                    tmpBoard[i][y] = 3
+
+                if tmpBoard[i+1][y] != 3:
+                    tmpBoard[i][y] = 3
+            elif tmpBoard[i][y] == 0 or tmpBoard[i][y] == 2:
+                break #dont continue if nothing there
+
+            for i in range(x - 1, -1, -1):
+                if tmpBoard[i][y] == 3:
+                    tmpBoard[i - 1][y + 1] = 2
+                    tmpBoard[i - 1][y - 1] = 2
+                    tmpBoard[i + 1][y + 1] = 2
+                    tmpBoard[i + 1][y - 1] = 2
+
+                    if tmpBoard[i][y - 1] != 3:
+                        tmpBoard[i][y - 1] = 3
+
+                    if tmpBoard[i][y + 1] != 3:
+                        tmpBoard[i][y + 1] = 3
+
+                    if tmpBoard[i - 1][y] != 3:
+                        tmpBoard[i][y] = 3
+
+                    if tmpBoard[i + 1][y] != 3:
+                        tmpBoard[i][y] = 3
+                elif tmpBoard[i][y] == 0 or tmpBoard[i][y] == 2:
+                    break
+
+            for i in range(y + 1, self.boardWidth):
+                if tmpBoard[x][i] == 3:
+                    tmpBoard[x - 1][i + 1] = 2
+                    tmpBoard[x - 1][i - 1] = 2
+                    tmpBoard[x + 1][i + 1] = 2
+                    tmpBoard[x + 1][i - 1] = 2
+
+                    if tmpBoard[x][i - 1] != 3:
+                        tmpBoard[x][i - 1] = 3
+
+                    if tmpBoard[x][i + 1] != 3:
+                        tmpBoard[x][i + 1] = 3
+
+                    if tmpBoard[x - 1][i] != 3:
+                        tmpBoard[x][i] = 3
+
+                    if tmpBoard[x + 1][i] != 3:
+                        tmpBoard[x][i] = 3
+                elif tmpBoard[x][i] == 0 or tmpBoard[i][y] == 2:
+                    break
+
+            for i in range(y - 1, -1, -1):
+                if tmpBoard[x][i] == 3:
+                    tmpBoard[x - 1][i + 1] = 2
+                    tmpBoard[x - 1][i - 1] = 2
+                    tmpBoard[x + 1][i + 1] = 2
+                    tmpBoard[x + 1][i - 1] = 2
+
+                    if tmpBoard[x][i - 1] != 3:
+                        tmpBoard[x][i - 1] = 3
+
+                    if tmpBoard[x][i + 1] != 3:
+                        tmpBoard[x][i + 1] = 3
+
+                    if tmpBoard[x - 1][i] != 3:
+                        tmpBoard[x][i] = 3
+
+                    if tmpBoard[x + 1][i] != 3:
+                        tmpBoard[x][i] = 3
+                elif tmpBoard[x][i] == 0 or tmpBoard[i][y] == 2:
+                    break
 
         return True
 

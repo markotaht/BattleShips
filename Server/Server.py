@@ -1,8 +1,9 @@
 import threading, random
-from collections import defaultdict
 from Session import Session
 from commons import createRPCListener
 from types import MethodType
+import pika
+import time
 
 class Server():
     def __init__(self):
@@ -29,6 +30,26 @@ class Server():
         self.getSessionsListener = MethodType(createRPCListener(self,'rpc_getSessions',self.getSessionsCallback), self, Server)
         self.getSessions = threading.Thread(target=self.getSessionsListener)
         self.getSessions.start()
+
+        self.keepalive()
+
+
+    def keepalive(self):
+        self.updateConnection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        self.updateChannel = self.updateConnection.channel()
+        self.updateChannel.exchange_declare(exchange='serverlist', type='fanout')
+        self.connections.append(self.updateConnection)
+
+        def emitter():
+            while 1:
+                print "Emitting"
+                self.updateChannel.basic_publish(exchange='serverlist',
+                                                 routing_key='',
+                                                 body=self.name)
+                time.sleep(1)
+
+        self.emitting = threading.Thread(target=emitter)
+        self.emitting.start()
 
     # Called when user is attempting to create a new session
     def createSessionCallback(self, request):
