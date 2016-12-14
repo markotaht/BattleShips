@@ -16,7 +16,7 @@ class Session(threading.Thread):
         self.server = server
         self.name = sessionName
         self.hostName = hostName
-        self.prefix = server +"." + sessionName
+        self.prefix = server.name +"." + sessionName
         self.lock = threading.Lock()
         self.updateChannel = None
         #TODO: Not really used?
@@ -38,7 +38,10 @@ class Session(threading.Thread):
 
     def kill(self):
         for i in self.connections:
-            i.close()
+            try:
+                i.close()
+            except:
+                print "Failed to close a connection"
 
 
     def tryAddPlayer(self, name):
@@ -73,7 +76,7 @@ class Session(threading.Thread):
     def run(self):
         while 1:
             if self.shouldDie:
-                self.kill()
+                self.server.killSession(self.name)
                 return
             #Check keepalive values for players and mark players as not ready if it is 20 seconds old
             for playerName in self.players:

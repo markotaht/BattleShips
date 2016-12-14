@@ -21,15 +21,18 @@ class SessionSelectScreen:
         self._refreshSessions()
         self.joinFailText = ""
 
-        #mock session
-        #self.addSession("Mock session", 8, 0)
-        #self.addSession("Mock session 2", 12, 4)
-
+        self._last = 0
 
     def update(self, events):
 
         if escapePressed(events):
             self.client.loadMainMenuScreen()
+
+        self._last += 1
+        #Update sessions every 1s
+        if self._last > 30:
+            self._refreshSessions()
+            self._last = 0
 
         #NEW SESSION
         newSessionText = self.mediumFont.render("Create new session", True, COLOR_WHITE, COLOR_BLACK)
@@ -205,9 +208,9 @@ class SessionSelectScreen:
 
     def _refreshSessions(self):
         data = self.client.getSessions("").split(":")
+        self._sessions = []
         if len(data) <= 1:
             return
-        self._sessions = []
         for i in range(0, len(data), 4):
             name = data[i]
             boardWidth = int(data[i + 1])

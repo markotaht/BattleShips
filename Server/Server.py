@@ -58,7 +58,7 @@ class Server():
         except ValueError:
             return "FAIL", ""
 
-        session = Session(self.name, sessionName, username, int(boardSize))
+        session = Session(self, sessionName, username, int(boardSize))
         self.sessions[sessionName] = session
 
         session.tryAddPlayer(username)
@@ -68,7 +68,8 @@ class Server():
         return response, ""
 
     def killSession(self,session):
-        self.sessions[session].kill()
+        print "Killing " + session
+        self.sessions.pop(session, None)
 
     #Called when user is attempting to join a session
     def joinSessionCallback(self, request):
@@ -163,6 +164,8 @@ class Server():
             if i != keyCount - 1:
                 response += ":"
 
+
+        print "Returning " + response
         # First argument is sent to only the sender. The second one is broadcasted globally.
         return response, ""
 
