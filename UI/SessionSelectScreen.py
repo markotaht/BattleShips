@@ -89,12 +89,12 @@ class SessionSelectScreen:
             sessionRect = self.windowSurface.blit(nameText, nameTextRect)
             otherRect = self.windowSurface.blit(otherText, otherTextRect)
 
-            joinFailError = self.smallFont.render(self.joinFailText, True, COLOR_WHITE,
-                                                   COLOR_BLACK)
-            joinFailErrorRect = joinFailError.get_rect()
-            joinFailErrorRect.left = 50
-            joinFailErrorRect.top = 380
-            self.windowSurface.blit(joinFailError, joinFailErrorRect)
+            if hasattr(self, "joinFailText"):
+                joinFailError = self.smallFont.render(self.joinFailText, True, COLOR_BLACK)
+                joinFailErrorRect = joinFailError.get_rect()
+                joinFailErrorRect.left = 50
+                joinFailErrorRect.top = 380
+                self.windowSurface.blit(joinFailError, joinFailErrorRect)
 
             if clickedOnRect(sessionRect, events) or clickedOnRect(otherRect, events):
                 if name != "No sessions found":

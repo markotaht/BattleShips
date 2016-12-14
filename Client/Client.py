@@ -27,6 +27,7 @@ class Client(object):
         self.state = "INIT"
         self.lastkeepAlive  = 0
 
+        self.connected = False;
         self.syncServerConnection = None
         self.syncSessionConnection = None
         self.asyncConnection = None
@@ -46,6 +47,7 @@ class Client(object):
             self.asyncServerListConnection.close()
         if self.asyncConnection:
             self.asyncConnection.close()
+        self.connected = False
         print "Closed"
 
     def serverlist(self, mqAddress):
@@ -100,7 +102,7 @@ class Client(object):
             # refresh the screen
             pygame.display.flip()
             #send keepalive every 3 seconds
-            if time() > self.lastkeepAlive + 3:
+            if time() > self.lastkeepAlive + 3 and self.connected:
                 try:
                     self.lastkeepAlive = time()
                     response = self.updateKeepAlive(self.username + ":" + str(self.lastkeepAlive))
@@ -140,6 +142,8 @@ class Client(object):
         print "Connecting to " + serverName + " " + mqAddress
         self.serverName = serverName
         self.mqAddress = mqAddress
+
+        self.connected = True
 
         self.syncServerConnection = pika.BlockingConnection(pika.ConnectionParameters(
             host=mqAddress))
@@ -299,6 +303,7 @@ class Client(object):
             self.asyncConnection.close()
         if self.syncSessionConnection:
             self.syncSessionConnection.close()
+        self.connected = False
 
     #Stuff for RPC/MQ
     def on_response(self, ch, method, props, body):
