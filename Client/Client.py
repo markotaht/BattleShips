@@ -27,8 +27,48 @@ class Client(object):
         self.state = "INIT"
         self.lastkeepAlive  = 0
 
+        self.serverlist("localhost")
         #Start the main loop
         self.run();
+
+
+    def close(self):
+        self.asyncServerListConnection.close()
+        self.asyncConnection.close()
+        self.syncServerConnection.close()
+        self.syncSessionConnection.close()
+
+    def serverlist(self, mqAddress):
+        #TODO Siit panna serverite nimed kuhugi. Timestampiga tuvastada millal viimane tuli(tsukkel hetkel 1 s) ja kui ei tule nt 5s jooksul uut, siis on offline
+        self.asyncServerListConnection =  pika.BlockingConnection(pika.ConnectionParameters(
+            host=mqAddress))
+
+        self.asyncServerListlistener = threading.Thread(target=self.listenforserverlist, name= "asyncServerListlistenerThread", args=(self.asyncServerListConnection,))
+        self.asyncServerListlistener.start()
+
+    def listenforserverlist(self, connection):
+        channel = connection.channel()
+
+        channel.exchange_declare('serverlist',
+                                 type='fanout')
+
+        result = channel.queue_declare(exclusive=True)
+        queue_name = result.method.queue
+
+        channel.queue_bind(exchange='serverlist',
+                           queue=queue_name)
+
+        print(' [*] Waiting for ServerList. To exit press CTRL+C')
+
+        def callback(ch, method, properties, body):
+            print "Servername:" + body
+
+        channel.basic_consume(callback,
+                              queue=queue_name,
+                              no_ack=True)
+
+        channel.start_consuming()
+        print "Closing"
 
     def run(self):
         clock = pygame.time.Clock()
@@ -40,6 +80,7 @@ class Client(object):
             events = pygame.event.get()
             for event in events:
                 if event.type == QUIT:
+                    self.close()
                     sys.exit()
             # Clear the screen
             self.windowSurface.fill(COLOR_WHITE)
