@@ -150,8 +150,8 @@ class Server():
             print("Rejecting %s joining. Game already started." % username)
             return "FAIL:"+sessionName + ":GAMESTARTED", ""
         else:
-            print("Rejecting %s joining. Game already started." % username)
-            return "FAIL:"+sessionName + ":GAMESTARTED, """
+            print("Rejecting %s joining. Game already over." % username)
+            return "FAIL:"+sessionName + ":GAMEOVER, """
 
     #Called when user is asking for available rooms on the server
     def getSessionsCallback(self, request):

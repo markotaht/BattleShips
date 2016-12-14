@@ -85,6 +85,8 @@ class GameScreen:
                 if clickedOnRect(kickRect, events):
                     print "Kicking " + player
                     self.client.kickPlayer(player)
+                    #Temporarily skip a frame to prevent errors below
+                    return
 
             if self.turnPlayer == self.client.username:
                 if player != self.client.username and self.players[player].hasBeenShot:

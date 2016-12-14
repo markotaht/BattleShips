@@ -193,6 +193,8 @@ class SessionSelectScreen:
                             self.joinFailText = "Your name is already in use and active in that session."
                         elif error == "GAMESTARTED":
                             self.joinFailText = "Unable to join, game already started."
+                        elif error == "GAMEOVER":
+                            self.joinFailText = "Unable to join, game has ended."
                         else:
                             self.joinFailText = "Unknown error occured when trying to join session."
 
@@ -213,7 +215,7 @@ class SessionSelectScreen:
 
     def _addSession(self, name, boardSize, playerCount, state):
         if state == "INIT":
-            state = "Setup"
+            state = "WAITING"
         elif state == "PLAY":
-            state = "Playing"
+            state = "PLAYING"
         self._sessions.append([name, boardSize, playerCount, state]);
