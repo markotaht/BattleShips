@@ -28,11 +28,12 @@ class SessionSelectScreen:
         if escapePressed(events):
             self.client.loadMainMenuScreen()
 
-        self._last += 1
-        #Update sessions every 1s
-        if self._last > 30:
-            self._refreshSessions()
-            self._last = 0
+        if hasattr(self, "_last"):
+            self._last += 1
+            #Update sessions every 1s
+            if self._last > 30:
+                self._refreshSessions()
+                self._last = 0
 
         #NEW SESSION
         newSessionText = self.mediumFont.render("Create new session", True, COLOR_WHITE, COLOR_BLACK)

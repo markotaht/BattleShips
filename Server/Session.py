@@ -28,7 +28,7 @@ class Session(threading.Thread):
         self.shipCount = self.getShipCount(boardWidth)
         self.dead = []
         self.state = "INIT"
-        self.playerturn = 1
+        self.playerturn = 0
         self.shots = 0
 
         self.shouldDie = False;
@@ -94,6 +94,16 @@ class Session(threading.Thread):
                             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                                              routing_key='',
                                                              body="DISCONNECTED:%s" % playerName)
+
+                            if self.hostName == playerName:
+                                if len(self.players) > 0:
+                                    # Set a new host
+                                    self.hostName = self.players.keys()[0]
+                                    self.updateChannel.basic_publish(exchange=self.prefix + 'updates', routing_key='',
+                                                                     body="NEWHOST:" + self.hostName)
+                                else:
+                                    # Tag session to be closed
+                                    self.shouldDie = True
 
             time.sleep(1) #check only every second
 
