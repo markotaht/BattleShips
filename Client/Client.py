@@ -245,6 +245,10 @@ class Client(object):
             elif parts[0] == "REJOININGPLAYER":
                 print "%s rejoined the game" % parts[1]
                 self.screen.players[parts[1]].connected = True
+            elif parts[0] == "NEWHOST":
+                print "Host changed to %s" % parts[1]
+                if self.username == parts[1]:
+                    self.screen.isHost = True
             elif parts[0] == "RESTARTING":
                 print "Restarting the session..."
 

@@ -176,13 +176,14 @@ class SessionSelectScreen:
                             self.client.loadSetupShipsScreen(boardSize, isHost)
 
                             #Fourth element should contain the already connected users
-                            playerData = split[3].split(";")
-                            print(playerData)
-                            for i in range(0, len(playerData), 2):
-                                playerName = playerData[i]
-                                playerReady = playerData[i + 1] == 'True'
-                                self.client.screen.addPlayer(playerName)
-                                self.client.screen.setPlayerReady(playerName, playerReady)
+                            if len(split) > 3:
+                                playerData = split[3].split(";")
+                                print(playerData)
+                                for i in range(0, len(playerData), 2):
+                                    playerName = playerData[i]
+                                    playerReady = playerData[i + 1] == 'True'
+                                    self.client.screen.addPlayer(playerName)
+                                    self.client.screen.setPlayerReady(playerName, playerReady)
 
 
                     else:

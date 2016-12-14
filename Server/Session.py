@@ -31,6 +31,8 @@ class Session(threading.Thread):
         self.playerturn = 1
         self.shots = 0
 
+        self.shouldDie = False;
+
         self.initChannels()
 
 
@@ -70,6 +72,9 @@ class Session(threading.Thread):
 
     def run(self):
         while 1:
+            if self.shouldDie:
+                self.kill()
+                return
             #Check keepalive values for players and mark players as not ready if it is 20 seconds old
             for playerName in self.players:
                 player = self.players[playerName]
@@ -159,6 +164,16 @@ class Session(threading.Thread):
                                          routing_key='',
                                          body="LEFT:"+request)
 
+        if self.hostName == request:
+            if len(self.players) > 0:
+                #Set a new host
+                self.hostName = self.players.keys()[0]
+                self.updateChannel.basic_publish(exchange=self.prefix + 'updates', routing_key='',
+                                             body="NEWHOST:" + self.hostName)
+            else:
+                #Tag session to be closed
+                self.shouldDie = True
+
         return "OK",""
 
         return
@@ -173,6 +188,16 @@ class Session(threading.Thread):
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',
                                          body="LEFT:"+request)
+
+        if self.hostName == request:
+            if len(self.players) > 0:
+                #Set a new host
+                self.hostName = self.players.keys()[0]
+                self.updateChannel.basic_publish(exchange=self.prefix + 'updates', routing_key='',
+                                             body="NEWHOST:" + self.hostName)
+            else:
+                # Tag session to be closed
+                self.shouldDie = True
 
         return "OK", ""
 
