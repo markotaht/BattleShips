@@ -88,10 +88,8 @@ class Client(object):
         print "Connecting to " + serverName + " " + mqAddress
         self.serverName = serverName
         self.mqAddress = mqAddress
-        self.asyncConnection = pika.BlockingConnection(pika.ConnectionParameters(
-            host=mqAddress))
 
-        self.syncConnection = pika.BlockingConnection(pika.ConnectionParameters(
+        self.syncServerConnection = pika.BlockingConnection(pika.ConnectionParameters(
             host=mqAddress))
 
         self.initServerListeners()
@@ -102,23 +100,30 @@ class Client(object):
         return True
 
     def initlisteners(self):
+        self.asyncConnection = pika.BlockingConnection(pika.ConnectionParameters(
+            host=self.mqAddress))
+
         self.sessionIdentifier = self.serverName + "." + self.sessionName
         self.asynclistener = threading.Thread(target=self.listenForUpdates, name= "asynclistenerThread", args=(self.asyncConnection,))
         self.asynclistener.start()
 
-        self.kickPlayer = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_kick_player'), self, Client)
-        self.finishedPlacing = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_finished_placing'), self, Client)
-        self.placeShip = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_place_ship'), self, Client)
-        self.bomb = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_bomb'), self, Client)
-        self.startGame = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_start'), self, Client)
+        self.syncSessionConnection = pika.BlockingConnection(pika.ConnectionParameters(
+            host=self.mqAddress))
+
+        self.kickPlayer = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_kick_player',self.syncSessionConnection), self, Client)
+        self.finishedPlacing = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_finished_placing',self.syncSessionConnection), self, Client)
+        self.placeShip = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_place_ship',self.syncSessionConnection), self, Client)
+        self.bomb = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_bomb',self.syncSessionConnection), self, Client)
+        self.startGame = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_start',self.syncSessionConnection), self, Client)
         self.updateKeepAlive = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_update_keep_alive'), self, Client)
         #SEND name only
-        self.disconnect = MethodType(self.createFunction(self.sessionIdentifier,'rpc_disconnect'),self,Client)
+        #TODO On return do self.asynConnection.close() and self.syncSessionConnection.close()
+        self.disconnect = MethodType(self.createFunction(self.sessionIdentifier,'rpc_disconnect',self.syncSessionConnection),self,Client)
 
     def initServerListeners(self):
-        self.createSession = MethodType(self.createFunction(self.serverName, 'rpc_createSession',True),self, Client)
-        self.joinSession = MethodType(self.createFunction(self.serverName, 'rpc_joinSession', True), self, Client)
-        self.getSessions = MethodType(self.createFunction(self.serverName, 'rpc_getSessions'), self, Client)
+        self.createSession = MethodType(self.createFunction(self.serverName, 'rpc_createSession',self.syncServerConnection,True),self, Client)
+        self.joinSession = MethodType(self.createFunction(self.serverName, 'rpc_joinSession',self.syncServerConnection, True), self, Client)
+        self.getSessions = MethodType(self.createFunction(self.serverName, 'rpc_getSessions',self.syncServerConnection), self, Client)
 
 
     #Stuff for asynccalls
@@ -213,8 +218,8 @@ class Client(object):
             self.response = body
 
     #Magic function to remove repeating code
-    def createFunction(self, prefix, queue, server=False):
-        channel = self.syncConnection.channel()
+    def createFunction(self, prefix, queue, connection,server=False):
+        channel = connection.channel()
         result = channel.queue_declare(exclusive=True)
         callback_queue = result.method.queue
         channel.basic_consume(self.on_response, no_ack=True,
@@ -231,7 +236,7 @@ class Client(object):
                                                ),
                                                body=str(n))
             while self.response is None:
-                self.syncConnection.process_data_events()
+                connection.process_data_events()
 
             if server:
                 self.room = self.response.split(":")[1]
