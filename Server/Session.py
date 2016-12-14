@@ -56,6 +56,14 @@ class Session(threading.Thread):
                 self.players[name] = player
                 self.order.append(name)
 
+                #Create bombing boards
+                for otherPlayer in self.players.keys():
+                    if otherPlayer != name:
+                        #Create a bombing board for other players to attack the joined player
+                        self.players[otherPlayer].otherBoards[name] = [[0 for i in range(self.boardWidth)] for j in range(self.boardWidth)]
+                        #Create a bombing board for the joined player to attack other players
+                        self.players[name].otherBoards[otherPlayer] = [[0 for i in range(self.boardWidth)] for j in range(self.boardWidth)]
+
                 return True
 
 
@@ -65,12 +73,14 @@ class Session(threading.Thread):
             for playerName in self.players:
                 player = self.players[playerName]
                 if player != 0:
-                    if float(player.keepAliveTime) + 20 < float(time.time()):
+                    if float(player.keepAliveTime) + 6 < float(time.time()):
                         if player.connected:
                             print "Old keepalive for player", player.keepAliveTime
                             print "Marking player as disconnected"
                             #TODO: Pick a new host
                             player.connected = False
+
+                            #TODO: send the player "TIMEDOUT" so if the player receives it, he can be put to main menu and stop listening
 
                             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                                              routing_key='',
@@ -190,11 +200,15 @@ class Session(threading.Thread):
         return True
 
 
-    def checkHit(self,x,y,player):
-        if self.players[player].board[x][y] == 1:
-            self.players[player].board[x][y] = 3
+    def checkHit(self, x, y, victim, attacker):
+        if self.players[victim].board[x][y] == TILE_SHIP:
+            self.players[victim].board[x][y] = TILE_SHIP_HIT
+            self.players[attacker].otherBoards[victim][x][y] = TILE_SHIP_HIT
             return "HIT"
-        return "MISS"
+        else:
+            self.players[victim].board[x][y] = TILE_MISS
+            self.players[attacker].otherBoards[victim][x][y] = TILE_MISS
+            return "MISS"
 
     def checkSunk(self,x,y,player):
         #TODO kui server hakkab ka misse hoidma siis peab seda t2iendama
@@ -265,33 +279,33 @@ class Session(threading.Thread):
 
     def bombShipCallback(self,request):
         print request
-        x, y, player, attacker = request.split(":")
+        x, y, victim, attacker = request.split(":")
 
-        print(" [.] bomb(%s,%s, %s, %s)" %(x,y,player, attacker))
-        response = self.checkHit(int(x),int(y),player)
+        print(" [.] bomb(%s,%s, %s, %s)" %(x,y,victim, attacker))
+        response = self.checkHit(int(x),int(y),victim, attacker)
         print response
 
         if response == "MISS":
             self.shots -= 1
 
         #TODO teha paremaks ja lisada juurde laeva edastamine koigile
-        if response == "HIT" and self.checkSunk(int(x),int(y),player):
-            hitcoords = self.getSunkDetails(int(x),int(y),player)
+        if response == "HIT" and self.checkSunk(int(x),int(y),victim):
+            hitcoords = self.getSunkDetails(int(x),int(y),victim)
             #pack for sending into x1;y1, x2;y2...
             hitcoords = ",".join([str(a[0])+";"+str(a[1]) for a in hitcoords])
-            message = ":".join(["SUNK",player, attacker,x,y, str(hitcoords)])
+            message = ":".join(["SUNK",victim, attacker,x,y, str(hitcoords)])
             #update player's ship count
-            if self.players[player].shipsRemaining != 1:
-                self.players[player].shipsRemaining -= 1
+            if self.players[victim].shipsRemaining != 1:
+                self.players[victim].shipsRemaining -= 1
             else:
-                self.killPlayer(player, attacker)
+                self.killPlayer(victim, attacker)
                 self.shots -= 1
 
-                print "%s is dead"%player
+                print "%s is dead"%victim
                 #TODO update also player that he is dead
             response = "SUNK"
         else:
-            message = ":".join(["BOMB",player,attacker,x,y,response])
+            message = ":".join(["BOMB",victim,attacker,x,y,response])
 
         #TODO this should be sent by the super global message thing
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',

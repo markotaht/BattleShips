@@ -1,7 +1,8 @@
 from Assets import *
 from Util import *
 from external import eztext
-
+from Board import Board
+from Player import Player
 
 class SessionSelectScreen:
 
@@ -107,21 +108,80 @@ class SessionSelectScreen:
 
                     if(response.startswith("FAIL") == False):
                         split = response.split(':')
+                        if response.startswith("WELCOMEBACK"):
+                            #Rejoining on game screen only (setup ships rejoin just overwrites the player)
+                            #Definitely not a host anymore
+                            isHost = False
+                            isGameStarted = True
 
-                        #Third element should be true if the client is host
-                        isHost = split[2] == 'True'
+                            #third element should contain board width
+                            boardWidth = int(split[2])
+                            print "boardwidth is " + str(boardWidth)
 
-                        #TODO: Determine to go ingame or start from setup ships screen
-                        self.client.loadSetupShipsScreen(boardSize, isHost)
+                            #fourth element should contain the player's board
+                            boardData = split[3]
+                            print "local board data is " + boardData
 
-                        #Fourth element should contain the already connected users
-                        playerData = split[3].split(";")
-                        print(playerData)
-                        for i in range(0, len(playerData), 2):
-                            playerName = playerData[i]
-                            playerReady = playerData[i + 1] == 'True'
-                            self.client.screen.addPlayer(playerName)
-                            self.client.screen.setPlayerReady(playerName, playerReady)
+                            board = Board()
+                            board.init(self.windowSurface, boardWidth, self)
+
+                            for i in range(0, len(boardData)):
+                                x = i / boardWidth
+                                y = i % boardWidth
+                                #print "Setting " + str(x) + " " + str(y) + " to " + str(boardData[i])
+                                board.setTileByIndex(x, y, int(boardData[i]))
+
+                            players = { }
+                            localPlayer = Player()
+                            localPlayer.init(self.client.username, True, board)
+                            players[self.client.username] = localPlayer
+
+                            #Fifth element should contain whose turn it is
+                            whoseTurn = split[4]
+
+                            #Sixth element should contain the already connected users
+                            playerData = split[5].split(";")
+                            print(playerData)
+                            for i in range(0, len(playerData), 3):
+                                playerName = playerData[i]
+                                playerConnected = playerData[i + 1] == 'True'
+                                playerBoardData = playerData[i + 2]
+                                print "other player board data is " + playerBoardData
+                                otherBoard = Board()
+                                otherBoard.init(self.windowSurface, boardWidth, self)
+                                for i in range(0, len(playerBoardData)):
+                                    x = i / boardWidth
+                                    y = i % boardWidth
+                                    otherBoard.setTileByIndex(x, y, int(playerBoardData[i]))
+
+                                player = Player()
+                                player.init(playerName, False, otherBoard)
+                                players[playerName] = player
+
+                                players[playerName].connected = playerConnected
+                                players[playerName].isReady = True
+
+                            self.client.loadGameScreen(board, isHost, isGameStarted, players)
+                            self.client.screen.setTurnPlayer(whoseTurn)
+
+
+                        elif response.startswith("WELCOME"):
+                            #New player/Rejoining on ship placement
+
+                            #Third element should be true if the client is host
+                            isHost = split[2] == 'True'
+
+                            #TODO: Determine to go ingame or start from setup ships screen
+                            self.client.loadSetupShipsScreen(boardSize, isHost)
+
+                            #Fourth element should contain the already connected users
+                            playerData = split[3].split(";")
+                            print(playerData)
+                            for i in range(0, len(playerData), 2):
+                                playerName = playerData[i]
+                                playerReady = playerData[i + 1] == 'True'
+                                self.client.screen.addPlayer(playerName)
+                                self.client.screen.setPlayerReady(playerName, playerReady)
 
 
                     else:

@@ -111,6 +111,7 @@ class GameScreen:
                         everyoneReady = False
                 else:
                     color = COLOR_DARK_GREY
+                    everyoneReady = False
 
             playerText = self.smallFont.render(player, True, color)
             playerTextRect = playerText.get_rect()

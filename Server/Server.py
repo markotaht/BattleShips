@@ -83,11 +83,36 @@ class Server():
             if username in session.players and session.players[username].connected == False:
                 print("Allowing %s to rejoin." % username)
 
-                message = "WELCOMEBACK:"+sessionName + ":" + str(session.hostName == username) + ":"
+                #THIRD ARGUMENT: board width
+                message = "WELCOMEBACK:"+sessionName + ":" + str(session.boardWidth) + ":"
+
+                #FOURTH ARGUMENT: player board
+                boardData = ""
+                for x in range(0, session.boardWidth):
+                    for y in range(0, session.boardWidth):
+                        boardData += str(session.players[username].board[x][y])
+
+                print "Board Data: " + boardData
+
+                message += boardData + ":"
+
+                #FIFTH ARGUMENT: Whose turn it is
+                message += session.order[session.playerturn] + ":"
+
+                #SIXTH ARGUMENT: Other players data
                 # Also include a list of currently connected players
                 for player in session.players.keys():
                     if player != username:
-                        message += player + ";" + str(session.players[player].isReady) + ";"
+                        message += player + ";" + str(session.players[player].connected) + ";"
+
+                        boardData = ""
+                        for x in range(0, session.boardWidth):
+                            for y in range(0, session.boardWidth):
+                                boardData += str(session.players[username].otherBoards[player][x][y])
+                        print "Board Data: " + boardData
+                        message += boardData + ";"
+
+
                 # Remove the extra ; at the end
                 message = message[:-1]
 

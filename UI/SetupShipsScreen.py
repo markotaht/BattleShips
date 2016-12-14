@@ -161,7 +161,7 @@ class SetupShipsScreen:
                 print "Response: %s" % response
 
                 if(response.startswith("FAIL") == False):
-                    self.client.loadGameScreen(self.board, self.isHost)
+                    self.client.loadGameScreen(self.board, self.isHost, False, self.players)
                 else:
                     print "Server rejected ship placement."
 

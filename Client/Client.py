@@ -47,8 +47,8 @@ class Client(object):
             self.screen.update(events)
             # refresh the screen
             pygame.display.flip()
-            #send keepalive every 10 seconds
-            if time() > self.lastkeepAlive + 10:
+            #send keepalive every 3 seconds
+            if time() > self.lastkeepAlive + 3:
                 try:
                     self.lastkeepAlive = time()
                     response = self.updateKeepAlive(self.username + ":" + str(self.lastkeepAlive))
@@ -78,13 +78,9 @@ class Client(object):
         self.screen.init(self, self.windowSurface, boardSize, isHost)
 
     #Board should contain your placed ships
-    def loadGameScreen(self, board, isHost):
-        #Get the palyers from setup ships screen
-        players = self.screen.players
+    def loadGameScreen(self, board, isHost, isGameStarted, players):
         self.screen = GameScreen()
 
-        #TODO: Implement correct value
-        isGameStarted = False
         self.screen.init(self, self.windowSurface, board, isHost, isGameStarted, players)
 
 
@@ -184,7 +180,7 @@ class Client(object):
                 self.screen.addPlayer(parts[1])
             elif parts[0] == "REJOININGPLAYER":
                 print "%s rejoined the game" % parts[1]
-                self.screen.addPlayer(parts[1])
+                self.screen.players[parts[1]].connected = True
             elif parts[0] == "DISCONNECTED":
                 print "Marking %s as disconnected" % parts[1]
                 self.screen.players[parts[1]].connected = False
