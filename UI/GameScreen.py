@@ -249,7 +249,7 @@ class GameScreen:
                     print "click on your board "+ str(tileX) + " " + str(tileY)
 
     #draws the sunk ship and it's surroundings
-    def markAsSunk(self,attackedPlayer, shiphit):
+    def markAsSunk(self,attackedPlayer, shiphit, shipmiss):
         shiphit = shiphit.split(",")
         #mark ship as sunk
         tmpBoard = self.players[attackedPlayer].board
@@ -260,96 +260,13 @@ class GameScreen:
             y = int(tmp[1])
             tmpBoard.setTileByIndex(x,y, 3)
 
-        #add miss symbols to edges
-        for j in shiphit:
-            tmp = j.split(";")
+        # add miss symbols around sunk ship
+        shipmiss = shipmiss.split(",")
+        for i in shipmiss:
+            tmp = i.split(";")
             x = int(tmp[0])
             y = int(tmp[1])
-            # check if ship on x+
-            for i in range(x + 1, self.boardWidth):
-                if tmpBoard.getTileByIndex(i,y) == 3:
-                    #skip sunkship symbols
-                    pass
-                elif tmpBoard.getTileByIndex(i,y) == 0:
-                    #if we find empty place place miss symbol there
-                    tmpBoard.setTileByIndex(i, y, 2)
-                    #and also to corners!
-                    if y + 1 <= self.boardWidth:
-                        tmpBoard.setTileByIndex(i, y + 1, 2)
-                    if y != 0:
-                        tmpBoard.setTileByIndex(i, y-1, 2)
-                    break
-                else:
-                    #other options:
-                    #miss - can skip
-                    #if there is ship symbol then something is wrong
-                    #if previous was hitsymbol and current is miss then add corners
-                    if tmpBoard.getTileByIndex(i-1,y) == 3 and tmpBoard.getTileByIndex(i,y) == 2:
-                        if y + 1 <= self.boardWidth:
-                            tmpBoard.setTileByIndex(i, y + 1, 2)
-                        if y != 0:
-                            tmpBoard.setTileByIndex(i, y - 1, 2)
-                    break
-            if x == 1:
-                if tmpBoard.getTileByIndex(0, y) == 0:
-                    tmpBoard.setTileByIndex(0, y, 2)
-            else:
-                for i in range(x - 1, -1, -1):
-                    if tmpBoard.getTileByIndex(i,y) == 3:
-                        pass
-                    elif tmpBoard.getTileByIndex(i,y) == 0:
-                        tmpBoard.setTileByIndex(i, y, 2)
-                        if y + 1 <= self.boardWidth:
-                            tmpBoard.setTileByIndex(i, y + 1, 2)
-                        if y != 0:
-                            tmpBoard.setTileByIndex(i, y - 1, 2)
-                        break
-                    else:
-                        if tmpBoard.getTileByIndex(i + 1, y) == 3 and tmpBoard.getTileByIndex(i, y) == 2:
-                            if y + 1 <= self.boardWidth:
-                                tmpBoard.setTileByIndex(i, y + 1, 2)
-                            if y != 0:
-                                tmpBoard.setTileByIndex(i, y - 1, 2)
-                        break
-
-            for i in range(y + 1, self.boardWidth):
-                if tmpBoard.getTileByIndex(x,i) == 3:
-                    pass
-                elif tmpBoard.getTileByIndex(x,i) == 0:
-                    tmpBoard.setTileByIndex(x, i, 2)
-                    if x + 1 <= self.boardWidth:
-                        tmpBoard.setTileByIndex(x+1, i, 2)
-                    if y != 0:
-                        tmpBoard.setTileByIndex(x-1, i, 2)
-                    break
-                else:
-                    if tmpBoard.getTileByIndex(x, i-1) == 3 and tmpBoard.getTileByIndex(x, i) == 2:
-                        if x + 1 <= self.boardWidth:
-                            tmpBoard.setTileByIndex(x + 1, i, 2)
-                        if y != 0:
-                            tmpBoard.setTileByIndex(x - 1, i, 2)
-                    break
-            if y == 1:
-                if tmpBoard.getTileByIndex(x, 0) == 0:
-                    tmpBoard.setTileByIndex(x, 0, 2)
-            else:
-                for i in range(y - 1, -1, -1):
-                    if tmpBoard.getTileByIndex(x,i) == 3:
-                        pass
-                    elif tmpBoard.getTileByIndex(x,i) == 0:
-                        tmpBoard.setTileByIndex(x, i, 2)
-                        if x + 1 <= self.boardWidth:
-                            tmpBoard.setTileByIndex(x + 1, i, 2)
-                        if y != 0:
-                            tmpBoard.setTileByIndex(x - 1, i, 2)
-                        break
-                    else:
-                        if tmpBoard.getTileByIndex(x, i + 1) == 3 and tmpBoard.getTileByIndex(x, i) == 2:
-                            if x + 1 <= self.boardWidth:
-                                tmpBoard.setTileByIndex(x + 1, i, 2)
-                            if y != 0:
-                                tmpBoard.setTileByIndex(x - 1, i, 2)
-                        break
+            tmpBoard.setTileByIndex(x, y, 2)
 
     def addPlayer(self, playerName):
         #Create a new player with a board

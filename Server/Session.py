@@ -374,6 +374,7 @@ class Session(threading.Thread):
     def getSunkDetails(self,x,y,player):
         tmpBoard = self.players[player].board
         shiphit = []#tuples of coords (x,y),board = 3
+        shipmiss = []#tuples of coors(x,y), board = 2
 
         #can add x,y as they sunk the ship
         shiphit.append((x,y))
@@ -404,13 +405,153 @@ class Session(threading.Thread):
             if tmpBoard[0][y] == 3:
                 shiphit.append((x, 0))
         for i in range(y - 1, 0, -1):
-            print "4", x, i
             if tmpBoard[x][i] == 3:
                 shiphit.append((x,i))
             else:
                 break
-        return shiphit
 
+        #return shiphit
+        for j in shiphit:
+            x = int(j[0])
+            y = int(j[1])
+            print x,y
+            print self.boardWidth
+            print type(x), type(y)
+            # check if ship on x+
+            for i in range(x + 1, self.boardWidth):
+                if tmpBoard[i][y] == 3:
+                    #skip sunkship symbols
+                    pass
+                elif tmpBoard[i][y] == 0:
+                    #if we find empty place place miss symbol there
+                    tmpBoard[i][y] == 2
+                    shipmiss.append((i,y))
+                    #and also to corners!
+                    if y + 1 <= self.boardWidth-1:
+                        tmpBoard[i][y + 1] = 2
+                        shipmiss.append((i, y+1))
+                    if y != 0:
+                        tmpBoard[i][y-1] = 2
+                        shipmiss.append((i, y-1))
+                    break
+                else:
+                    #other options:
+                    #miss - can skip
+                    #if there is ship symbol then something is wrong
+                    #if previous was hitsymbol and current is miss then add corners
+                    if tmpBoard[i-1][y] == 3 and tmpBoard[i][y] == 2:
+                        if y + 1 <= self.boardWidth-1:
+                            tmpBoard[i][y + 1] = 2
+                            shipmiss.append((i, y+1))
+                        if y != 0:
+                            tmpBoard[i][y - 1] = 2
+                            shipmiss.append((i, y-1))
+                    break
+            if x == 1:
+                if tmpBoard[0][y] == 0:
+                    tmpBoard[0][y] = 2
+                    shipmiss.append((0, y))
+                #check corners
+                if y-1 != -1:
+                    if tmpBoard[0][y-1] == 0:
+                        tmpBoard[0][y-1] = 2
+                        shipmiss.append((0, y-1))
+                if x+1 <= self.boardWidth -1:
+                    if tmpBoard[0][y+1] == 0:
+                        tmpBoard[0][y+1] = 2
+                        shipmiss.append((0, y+1))
+            else:
+                for i in range(x - 1, 0, -1):
+                    if tmpBoard[i][y] == 3:
+                        pass
+                    elif tmpBoard[i][y] == 0:
+                        tmpBoard[i][y] = 2
+                        shipmiss.append((i, y))
+                        if y + 1 <= self.boardWidth-1:
+                            tmpBoard[i][y+1] = 2
+                            shipmiss.append((i, y+1))
+                        if y != 0:
+                            tmpBoard[i][y - 1] = 2
+                            shipmiss.append((i, y-1))
+                        break
+                    else:
+                        if tmpBoard[i + 1][y] == 3 and tmpBoard[i][y] == 2:
+                            if y + 1 <= self.boardWidth-1:
+                                tmpBoard[i][y + 1] = 2
+                                shipmiss.append((i, y+1))
+                            if y != 0:
+                                tmpBoard[i][y - 1]= 2
+                                shipmiss.append((i, y-1))
+                        break
+
+            for i in range(y + 1, self.boardWidth):
+                if tmpBoard[x][i] == 3:
+                    pass
+                elif tmpBoard[x][i] == 0:
+                    tmpBoard[x][i] = 2
+                    shipmiss.append((x, i))
+                    if x + 1 <= self.boardWidth-1:
+                        tmpBoard[x+1][i] = 2
+                        shipmiss.append((x+1, i))
+                    if y != 0:
+                        tmpBoard[x-1][i] = 2
+                        shipmiss.append((x-1, i))
+                    break
+                else:
+                    if tmpBoard[x][i-1] == 3 and tmpBoard[x][i] == 2:
+                        if x + 1 <= self.boardWidth-1:
+                            tmpBoard[x + 1][i] = 2
+                            shipmiss.append((x+1, i))
+                        if y != 0:
+                            tmpBoard[x - 1][i] = 2
+                            shipmiss.append((x-1, i))
+                    break
+            if y == 1:
+                if tmpBoard[x][0] == 0:
+                    tmpBoard[x][0] = 2
+                    shipmiss.append((x, 0))
+                #check corners
+                if x-1 != -1:
+                    if tmpBoard[x-1][0] == 0:
+                        tmpBoard[x-1][0] = 2
+                        shipmiss.append((x-1, 0))
+                if x+1 <= self.boardWidth -1:
+                    if tmpBoard[x+1][0] == 0:
+                        tmpBoard[x+1][0] = 2
+                        shipmiss.append((x+1, 0))
+            else:
+                for i in range(y - 1, 0, -1):
+                    if tmpBoard[x][i] == 3:
+                        pass
+                    elif tmpBoard[x][i] == 0:
+                        tmpBoard[x][i] = 2
+                        shipmiss.append((x, i))
+                        if x + 1 <= self.boardWidth-1:
+                            tmpBoard[x + 1][i] = 2
+                            shipmiss.append((x+1, i))
+                        if y != 0:
+                            tmpBoard[x - 1][i] =2
+                            shipmiss.append((x-1, i))
+                        break
+                    else:
+                        if tmpBoard[x][i + 1] == 3 and tmpBoard[x][i] == 2:
+                            if x + 1 <= self.boardWidth-1:
+                                tmpBoard[x + 1][i] = 2
+                                shipmiss.append((x+1, i))
+                            if y != 0:
+                                tmpBoard[x - 1][i] = 2
+                                shipmiss.append((x-1, i))
+                        break
+            print shipmiss
+            shipmiss2 = []
+            #remove negative values
+            for i in shipmiss:
+                if i[0] < 0 or i [1] < 0:
+                    pass #someone changed the detection and now it also has negatives
+                    #shame on you
+                else:
+                    shipmiss2.append(i)
+        return shiphit, shipmiss2
 
     def bombShipCallback(self,request):
         print request
@@ -424,11 +565,14 @@ class Session(threading.Thread):
             self.shots -= 1
 
         if response == "HIT" and self.checkSunk(int(x),int(y),victim):
-            hitcoords = self.getSunkDetails(int(x),int(y),victim)
+            hitcoords, misscoords = self.getSunkDetails(int(x),int(y),victim)
             #pack for sending into x1;y1, x2;y2...
-            hitcoords = ",".join([str(a[0])+";"+str(a[1]) for a in hitcoords])
-            message = ":".join(["SUNK",victim, attacker,x,y, str(hitcoords)])
+            hitcoords = ",".join([str(a[0])+";"+str(a[1]) for a in list(set(hitcoords))])
+            misscoords = ",".join([str(a[0])+";"+str(a[1]) for a in list(set(misscoords))])
+            message = ":".join(["SUNK",victim, attacker,x,y, str(hitcoords), str(misscoords)])
+
             #update player's ship count
+            #but allow to continue if they enemy has ships left
             if self.players[victim].shipsRemaining != 1:
                 self.players[victim].shipsRemaining -= 1
             else:
