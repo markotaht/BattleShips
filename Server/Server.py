@@ -83,6 +83,9 @@ class Server():
             if username in session.players and session.players[username].connected == False:
                 print("Allowing %s to rejoin." % username)
 
+                session.updateChannel.basic_publish(exchange=session.prefix + 'updates', routing_key='',
+                                                 body="REJOININGPLAYER:%s" % username)
+
                 #THIRD ARGUMENT: board width
                 message = "WELCOMEBACK:"+sessionName + ":" + str(session.boardWidth) + ":"
 

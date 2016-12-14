@@ -8,6 +8,7 @@ class GameScreen:
         self.windowSurface = windowSurface
         self.boardWidth = board.boardWidth
         self.isGameStarted = isGameStarted
+        self.isGameOver = False
         self.isHost = isHost
 
         self.players = players
@@ -133,6 +134,16 @@ class GameScreen:
                     self.isGameStarted = True
                     self.nextBoard()
 
+        #Add self.isGameOver and self.isHost when done testing restarting here
+        if self.isHost:
+            restartGameText = self.mediumFont.render("Restart game", True, COLOR_WHITE, COLOR_BLACK)
+            restartGameTextRect = restartGameText.get_rect()
+            restartGameTextRect.left = 20
+            restartGameTextRect.bottom = 440
+            restartGameRect = self.windowSurface.blit(restartGameText, restartGameTextRect)
+            if clickedOnRect(restartGameRect, events):
+                print("Restarting the game...")
+                response = self.client.restartGame("")
 
         #Navigating between boards
         previousText = self.largeFont.render(" < ", True, COLOR_WHITE, COLOR_BLACK)
