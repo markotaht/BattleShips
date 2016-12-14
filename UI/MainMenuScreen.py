@@ -97,7 +97,7 @@ class MainMenuScreen:
 
         if len(self._servers) == 0:
             #no servers
-            servers = [["No servers found.", 0]]
+            servers = [["No servers found.", ""]]
         else:
             servers = self._servers
 

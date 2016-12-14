@@ -2,12 +2,11 @@ import threading, random
 from Session import Session
 from commons import createRPCListener
 from types import MethodType
-import pika
-import time
+import pika, time, random
 
 class Server():
     def __init__(self):
-        self.name = 'Hardcoded localhost server'
+        self.name = 'Server ' + str(random.randint(1, 100000))
         self.prefix = self.name
         self.sessions = {}
         self.users = []

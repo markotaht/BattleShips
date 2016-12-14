@@ -156,6 +156,16 @@ class Session(threading.Thread):
                                          routing_key='',
                                          body="DISCONNECTED:%s" % request)
 
+        if self.hostName == request:
+            if len(self.players) > 0:
+                # Set a new host
+                self.hostName = self.players.keys()[0]
+                self.updateChannel.basic_publish(exchange=self.prefix + 'updates', routing_key='',
+                                                 body="NEWHOST:" + self.hostName)
+            else:
+                # Tag session to be closed
+                self.shouldDie = True
+
         return "OK", ""
 
     def gameRestartCallback(self, request):

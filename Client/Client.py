@@ -133,9 +133,6 @@ class Client(object):
     def loadMainMenuScreen(self):
         self.screen = MainMenuScreen()
         self.screen.init(self, self.windowSurface)
-        #TODO: remove later
-        #This is hardcoded and has also to be the same in Server.py for it to work
-        self.screen.addServer('Hardcoded localhost server', 'localhost')
 
     def loadNewSessionScreen(self):
         self.screen = NewSessionScreen()
