@@ -40,13 +40,25 @@ class Client(object):
 
     def close(self):
         if self.syncServerConnection:
-            self.syncServerConnection.close()
+            try:
+                self.syncServerConnection.close()
+            except:
+                pass
         if self.syncSessionConnection:
-            self.syncSessionConnection.close()
+            try:
+                self.syncSessionConnection.close()
+            except:
+                pass
         if self.asyncServerListConnection:
-            self.asyncServerListConnection.close()
+            try:
+                self.asyncServerListConnection.close()
+            except:
+                pass
         if self.asyncConnection:
-            self.asyncConnection.close()
+            try:
+                self.asyncConnection.close()
+            except:
+                pass
         self.connected = False
         print "Closed"
 
@@ -80,7 +92,11 @@ class Client(object):
                               queue=queue_name,
                               no_ack=True)
 
-        self.serverListChannel.start_consuming()
+        try:
+            self.serverListChannel.start_consuming()
+        except:
+            print "Consuming failed"
+
 
     def run(self):
         clock = pygame.time.Clock()
@@ -94,6 +110,8 @@ class Client(object):
                 if event.type == QUIT:
                     #TODO Kill everything
                     self.close()
+                    pygame.display.quit()
+                    pygame.quit()
                     sys.exit()
             # Clear the screen
             self.windowSurface.fill(COLOR_WHITE)
@@ -298,7 +316,10 @@ class Client(object):
                               queue=queue_name,
                               no_ack=True)
 
-        channel.start_consuming()
+        try:
+            channel.start_consuming()
+        except:
+            print "Something went wrong consuming"
 
 
     def stoplisteningToSession(self):
