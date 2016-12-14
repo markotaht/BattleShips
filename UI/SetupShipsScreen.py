@@ -75,6 +75,15 @@ class SetupShipsScreen:
         #if escapePressed(events):
             #TODO: Handle
 
+        # leave button
+        leaveText = self.smallFont.render("Leave session", True, COLOR_WHITE, COLOR_BLACK)
+        leaveTextRect = leaveText.get_rect()
+        leaveTextRect.left = 300
+        leaveTextRect.top = 10
+        leaveRect = self.windowSurface.blit(leaveText, leaveTextRect)
+        if clickedOnRect(leaveRect, events):
+            self.client.leave(self.client.username)
+
         #disconnect button
         disconnectText = self.mediumFont.render("Disconnect", True, COLOR_WHITE, COLOR_BLACK)
         disconnectTextRect = disconnectText.get_rect()
@@ -249,3 +258,6 @@ class SetupShipsScreen:
 
     def setPlayerReady(self, playerName, isReady):
         self.players[playerName].isReady = isReady
+
+    def removePlayer(self, playerName):
+        self.players.pop(playerName, None)

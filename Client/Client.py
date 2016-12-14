@@ -120,7 +120,7 @@ class Client(object):
         self.updateKeepAlive = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_update_keep_alive',self.syncSessionConnection), self, Client)
         #SEND name only
         #TODO On return do self.asynConnection.close() and self.syncSessionConnection.close()
-        self.disconnect = MethodType(self.createFunction(self.sessionIdentifier,'rpc_disconnect',self.syncSessionConnection),self,Client)
+        self.leave = MethodType(self.createFunction(self.sessionIdentifier,'rpc_leave',self.syncSessionConnection),self,Client)
 
     def initServerListeners(self):
         self.createSession = MethodType(self.createFunction(self.serverName, 'rpc_createSession',self.syncServerConnection,True),self, Client)
@@ -191,9 +191,25 @@ class Client(object):
                 self.screen.players[parts[1]].connected = True
             elif parts[0] == "RESTARTING":
                 print "Restarting the session..."
+
+                oldPlayers = self.screen.players
+
+                self.loadSetupShipsScreen(self.screen.boardWidth, self.screen.isHost)
+
+                for player in oldPlayers:
+                    if player != self.username:
+                        self.screen.addPlayer(player)
+
             elif parts[0] == "DISCONNECTED":
                 print "Marking %s as disconnected" % parts[1]
-                self.screen.players[parts[1]].connected = False
+
+                if parts[1] != self.username:
+                    self.screen.players[parts[1]].connected = False
+                else:
+                    #Player itself has been marked as disconnected
+                    self.loadSessionSelectScreen()
+                    self.stoplisteningToSession(self.sessionName)
+
             elif parts[0] == "OVER":
                 print "Game over, %s won"%parts[1]
                 self.screen.isGameStarted = True
@@ -203,10 +219,19 @@ class Client(object):
                 self.screen.killPlayer(parts[1])
                 if parts[1] == self.username:
                     self.screen.deadStr = "Killed by %s"%parts[2]
-            #Player left because he/she wated to
+            #Player left because he/she wanted to
             elif parts[0] == "LEFT":
-                #TODO Review player leaving on his own will
-                self.screen.players.pop(parts[1],None)
+                print "Player left " + parts[1]
+
+                #TODO Review player leaving on his own will/kicked
+                if parts[1] != self.username:
+                    self.screen.removePlayer(parts[1])
+                else:
+                    # Player himself has been marked as disconnected
+                    self.loadSessionSelectScreen()
+                    self.screen.joinFailText = "You left/You were kicked from the session."
+                    self.stoplisteningToSession(self.sessionName)
+
             else:
                 print "not known message "+body
 
@@ -216,6 +241,9 @@ class Client(object):
 
         channel.start_consuming()
 
+
+    def stoplisteningToSession(self, sessionName):
+        print "Should stop listening for session " + sessionName
 
     #Stuff for RPC/MQ
     def on_response(self, ch, method, props, body):

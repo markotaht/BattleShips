@@ -19,6 +19,7 @@ class Session(threading.Thread):
         self.prefix = server +"." + sessionName
         self.lock = threading.Lock()
         self.updateChannel = None
+        #TODO: Not really used?
         self.connections = []
 
         self.players = {}
@@ -113,32 +114,61 @@ class Session(threading.Thread):
             self.keepAliveListener = threading.Thread(target = self.keepAliveListener)
             self.keepAliveListener.start()
 
-            self.disconnectListener = MethodType(createRPCListener(self,'rpc_disconnect',self.disconnectCallback,True),self,Session)
-            self.disconnect = threading.Thread(target=self.disconnectListener)
-            self.disconnect.start()
+            self.leaveListener = MethodType(createRPCListener(self,'rpc_leave',self.leaveCallback,True),self,Session)
+            self.leave = threading.Thread(target=self.leaveListener)
+            self.leave.start()
 
             self.runThread = threading.Thread(target = self.run)
             self.runThread.start()
 
 
     def gameRestartCallback(self, request):
-        print "Should restart game"
+        print "Restarting the session"
 
-        return "OK", "RESTARTING:" + self.name
+        oldPlayers = self.players
 
-    def disconnectCallback(self,request):
-        print("[.] player %s disconnected" % request)
+        self.state = "INIT"
+        self.players = { }
+        self.order = []
+        self.dead = []
+        self.playerturn = 1
+        self.shots = 0
+
+        for oldPlayer in oldPlayers:
+            self.tryAddPlayer(oldPlayer)
+
+        #The global argument doesnt seem to be working, so...
+        self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                         routing_key='',
+                                         body="RESTARTING")
+        return "OK", ""
+
+    def leaveCallback(self,request):
+        print("[.] player %s left" % request)
         self.order.remove(request)
         self.players.pop(request,None)
 
-        return "OK","LEFT:"+request
+        #The global argument doesnt seem to be working, so...
+        self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                         routing_key='',
+                                         body="LEFT:"+request)
+
+        return "OK",""
 
         return
     def kickPlayerCallback(self, request):
         print(" [.] kickPlayer(%s)" % request)
-        self.order.remove(request)
-        self.players.pop(request,None)
-        return "OK", "LEFT:"+request
+        if request in self.order:
+            self.order.remove(request)
+        if request in self.players:
+            self.players.pop(request,None)
+
+        #The global argument doesnt seem to be working, so...
+        self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                         routing_key='',
+                                         body="LEFT:"+request)
+
+        return "OK", ""
 
 
     def finishedPlacingCallback(self,request):
@@ -372,7 +402,8 @@ class Session(threading.Thread):
     def updateKeepAlive(self,request):
         name, keepalive = request.split(":")
         keepalive = float(keepalive)
-        self.players[name].keepAliveTime = keepalive
+        if name in self.players:
+            self.players[name].keepAliveTime = keepalive
         #print "New keepalive:", name
         #TODO check why it fails with OK
         #fails with ok as it does not contain :, dno why
@@ -396,6 +427,7 @@ class Session(threading.Thread):
             self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                              routing_key='',
                                              body="OVER:"+self.order[0])
+            self.state = "OVER"
 
     def killPlayer(self, player, killer):
         self.players[player].shipsRemaining = 0

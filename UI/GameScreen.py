@@ -60,14 +60,14 @@ class GameScreen:
         turnTextRect.top = 10
         self.windowSurface.blit(turnText, turnTextRect)
 
-        #disconnect button
-        disconnectText = self.mediumFont.render("Disconnect", True, COLOR_WHITE, COLOR_BLACK)
-        disconnectTextRect = disconnectText.get_rect()
-        disconnectTextRect.left = 300
-        disconnectTextRect.top = 10
-        self.windowSurface.blit(disconnectText, disconnectTextRect)
-        if clickedOnRect(disconnectTextRect, events):
-            print("Disconnect placeholder...")
+        #leave button
+        leaveText = self.smallFont.render("Leave session", True, COLOR_WHITE, COLOR_BLACK)
+        leaveTextRect = leaveText.get_rect()
+        leaveTextRect.left = 300
+        leaveTextRect.top = 10
+        leaveRect = self.windowSurface.blit(leaveText, leaveTextRect)
+        if clickedOnRect(leaveRect, events):
+            self.client.leave(self.client.username)
 
         y = 100
         #Player list
@@ -83,8 +83,8 @@ class GameScreen:
                 x += 45
                 kickRect = self.windowSurface.blit(kickText, kickTextRect)
                 if clickedOnRect(kickRect, events):
-                    #TODO
-                    print "Should kick player"
+                    print "Kicking " + player
+                    self.client.kickPlayer(player)
 
             if self.turnPlayer == self.client.username:
                 if player != self.client.username and self.players[player].hasBeenShot:
@@ -364,3 +364,8 @@ class GameScreen:
             self.winnerStr = "YOU WIN!"
         else:
             self.winnerStr = winner + " WON!"
+
+    def removePlayer(self, playerName):
+        self.players.pop(playerName, None)
+        #Just to be safe
+        self.setActivePlayer(self.client.username)

@@ -79,7 +79,7 @@ class Server():
             message = message[:-1]
 
             return message, ""
-        else:
+        elif session.state == "PLAY":
             if username in session.players and session.players[username].connected == False:
                 print("Allowing %s to rejoin." % username)
 
@@ -126,6 +126,9 @@ class Server():
 
             print("Rejecting %s joining. Game already started." % username)
             return "FAIL:"+sessionName + ":GAMESTARTED", ""
+        else:
+            print("Rejecting %s joining. Game already started." % username)
+            return "FAIL:"+sessionName + ":GAMESTARTED, """
 
     #Called when user is asking for available rooms on the server
     def getSessionsCallback(self, request):
