@@ -249,7 +249,7 @@ class Client(object):
                 else:
                     #Player itself has been marked as disconnected
                     self.loadSessionSelectScreen()
-                    self.stoplisteningToSession(self.sessionName)
+                    self.stoplisteningToSession()
 
             elif parts[0] == "OVER":
                 print "Game over, %s won"%parts[1]
@@ -271,7 +271,7 @@ class Client(object):
                     # Player himself has been marked as disconnected
                     self.loadSessionSelectScreen()
                     self.screen.joinFailText = "You left/You were kicked from the session."
-                    self.stoplisteningToSession(self.sessionName)
+                    self.stoplisteningToSession()
 
             else:
                 print "not known message "+body
@@ -283,8 +283,10 @@ class Client(object):
         channel.start_consuming()
 
 
-    def stoplisteningToSession(self, sessionName):
-        print "Should stop listening for session " + sessionName
+    def stoplisteningToSession(self):
+        print "Stopping listening to session."
+        self.asynConnection.close()
+        self.syncSessionConnection.close()
 
     #Stuff for RPC/MQ
     def on_response(self, ch, method, props, body):
