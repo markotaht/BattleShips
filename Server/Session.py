@@ -33,6 +33,12 @@ class Session(threading.Thread):
 
         self.initChannels()
 
+
+    def kill(self):
+        for i in self.connections:
+            i.close()
+
+
     def tryAddPlayer(self, name):
         with self.lock:
             if name in self.players and self.players[name].connected == True:

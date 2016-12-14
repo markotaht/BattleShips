@@ -68,6 +68,8 @@ class Server():
         # First argument is sent to only the sender. The second one is broadcasted globally.
         return response, ""
 
+    def killSession(self,session):
+        self.sessions[session].kill()
 
     #Called when user is attempting to join a session
     def joinSessionCallback(self, request):

@@ -71,7 +71,8 @@ class Client(object):
         print(' [*] Waiting for ServerList. To exit press CTRL+C')
 
         def callback(ch, method, properties, body):
-            print "Servername:" + body
+            if isinstance(self.screen, MainMenuScreen):
+                self.screen.addServer(body,'localhost')
 
         self.serverListChannel.basic_consume(callback,
                               queue=queue_name,
