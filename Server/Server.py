@@ -9,7 +9,7 @@ class Server():
         self.name = 'Hardcoded localhost server'
         self.prefix = self.name
         self.sessions = {}
-        self.users = defaultdict(str)
+        self.users = []
         self.connections = []
         self.initListeners()
 
@@ -137,6 +137,16 @@ class Server():
 
         # First argument is sent to only the sender. The second one is broadcasted globally.
         return response, ""
+
+    def joinServerCallback(self, request):
+        print(" [.] joinServer (%s)" %request)
+        response = "";
+        if(request in self.users):
+            return "FAIL:" + self.name +":NAMEINUSE", ""
+        else:
+            self.users.append(request)
+            return "SUCCESS", ""
+
 
 
 if __name__ == "__main__":
