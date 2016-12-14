@@ -71,7 +71,8 @@ class Client(object):
         print(' [*] Waiting for ServerList. To exit press CTRL+C')
 
         def callback(ch, method, properties, body):
-            print "Servername:" + body
+            if isinstance(self.screen, MainMenuScreen):
+                self.screen.addServer(body,'localhost')
 
         self.serverListChannel.basic_consume(callback,
                               queue=queue_name,
@@ -89,7 +90,7 @@ class Client(object):
             events = pygame.event.get()
             for event in events:
                 if event.type == QUIT:
-                    #TODO Sureta siin kõik välja.... dunno kuidas aint...
+                    #TODO Sureta siin koik valja.... dunno kuidas aint...
                     self.close()
                     sys.exit()
             # Clear the screen
