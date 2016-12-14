@@ -131,4 +131,5 @@ class MainMenuScreen:
 
     #name and mqAddress both expected to be strings
     def addServer(self, name, mqAddress):
-        self._servers.append([name, mqAddress]);
+        if not [name, mqAddress] in self._servers:
+            self._servers.append([name, mqAddress]);

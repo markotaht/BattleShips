@@ -282,7 +282,7 @@ class GameScreen:
                 if tmpBoard.getTileByIndex(0, y) == 0:
                     tmpBoard.setTileByIndex(0, y, 2)
             else:
-                for i in range(x - 1, 0, -1):
+                for i in range(x - 1, -1, -1):
                     if tmpBoard.getTileByIndex(i,y) == 3:
                         pass
                     elif tmpBoard.getTileByIndex(i,y) == 0:
@@ -321,7 +321,7 @@ class GameScreen:
                 if tmpBoard.getTileByIndex(x, 0) == 0:
                     tmpBoard.setTileByIndex(x, 0, 2)
             else:
-                for i in range(y - 1, 0, -1):
+                for i in range(y - 1, -1, -1):
                     if tmpBoard.getTileByIndex(x,i) == 3:
                         pass
                     elif tmpBoard.getTileByIndex(x,i) == 0:

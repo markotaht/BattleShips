@@ -110,15 +110,17 @@ class SessionSelectScreen:
                         if response.startswith("WELCOMEBACK"):
                             #Rejoining on game screen only (setup ships rejoin just overwrites the player)
                             #Definitely not a host anymore
-                            isHost = False
                             isGameStarted = True
 
-                            #third element should contain board width
-                            boardWidth = int(split[2])
+                            #Third element should contain host
+                            isHost = split[2] == 'True'
+
+                            #Fourth element should contain board width
+                            boardWidth = int(split[3])
                             print "boardwidth is " + str(boardWidth)
 
-                            #fourth element should contain the player's board
-                            boardData = split[3]
+                            #Fifth element should contain the player's board
+                            boardData = split[4]
                             print "local board data is " + boardData
 
                             board = Board()
@@ -135,11 +137,11 @@ class SessionSelectScreen:
                             localPlayer.init(self.client.username, True, board)
                             players[self.client.username] = localPlayer
 
-                            #Fifth element should contain whose turn it is
-                            whoseTurn = split[4]
+                            #Sixth element should contain whose turn it is
+                            whoseTurn = split[5]
 
-                            #Sixth element should contain the already connected users
-                            playerData = split[5].split(";")
+                            #Seventh element should contain the already connected users
+                            playerData = split[6].split(";")
                             print(playerData)
                             for i in range(0, len(playerData), 3):
                                 playerName = playerData[i]

@@ -42,7 +42,6 @@ class Server():
 
         def emitter():
             while 1:
-                print "Emitting"
                 self.updateChannel.basic_publish(exchange='serverlist',
                                                  routing_key='',
                                                  body=self.name)
@@ -109,10 +108,10 @@ class Server():
                 session.updateChannel.basic_publish(exchange=session.prefix + 'updates', routing_key='',
                                                  body="REJOININGPLAYER:%s" % username)
 
-                #THIRD ARGUMENT: board width
-                message = "WELCOMEBACK:"+sessionName + ":" + str(session.boardWidth) + ":"
+                #THIRD & FOURTH ARGUMENT: is host, board width
+                message = "WELCOMEBACK:"+sessionName + ":" + str(session.hostName == username) + ":" + str(session.boardWidth) + ":"
 
-                #FOURTH ARGUMENT: player board
+                #FIFTH ARGUMENT: player board
                 boardData = ""
                 for x in range(0, session.boardWidth):
                     for y in range(0, session.boardWidth):
@@ -122,10 +121,10 @@ class Server():
 
                 message += boardData + ":"
 
-                #FIFTH ARGUMENT: Whose turn it is
+                #SIXTH ARGUMENT: Whose turn it is
                 message += session.order[session.playerturn] + ":"
 
-                #SIXTH ARGUMENT: Other players data
+                #SEVENTH ARGUMENT: Other players data
                 # Also include a list of currently connected players
                 for player in session.players.keys():
                     if player != username:
