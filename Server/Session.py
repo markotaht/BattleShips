@@ -142,9 +142,21 @@ class Session(threading.Thread):
             self.leave = threading.Thread(target=self.leaveListener)
             self.leave.start()
 
+            self.disconnectListener = MethodType(createRPCListener(self,'rpc_disconnect',self.disconnectCallback,True),self,Session)
+            self.disconnect = threading.Thread(target=self.disconnectListener)
+            self.disconnect.start()
+
             self.runThread = threading.Thread(target = self.run)
             self.runThread.start()
 
+    def disconnectCallback(self, request):
+        self.players[request].connected = False
+
+        self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                         routing_key='',
+                                         body="DISCONNECTED:%s" % request)
+
+        return "OK", ""
 
     def gameRestartCallback(self, request):
         print "Restarting the session"

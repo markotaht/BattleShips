@@ -66,11 +66,22 @@ class GameScreen:
         #leave button
         leaveText = self.smallFont.render("Leave session", True, COLOR_WHITE, COLOR_BLACK)
         leaveTextRect = leaveText.get_rect()
-        leaveTextRect.left = 300
+        leaveTextRect.left = 280
         leaveTextRect.top = 10
         leaveRect = self.windowSurface.blit(leaveText, leaveTextRect)
         if clickedOnRect(leaveRect, events):
             self.client.leave(self.client.username)
+
+        #If player is not dead
+        if self.deadStr == "":
+            #disconnect button
+            disconnectText = self.smallFont.render("Disconnect temporarily", True, COLOR_WHITE, COLOR_BLACK)
+            disconnectTextRect = disconnectText.get_rect()
+            disconnectTextRect.left = 400
+            disconnectTextRect.top = 10
+            disconnectRect = self.windowSurface.blit(disconnectText, disconnectTextRect)
+            if clickedOnRect(disconnectRect, events):
+                self.client.disconnect(self.client.username)
 
         y = 100
         #Player list

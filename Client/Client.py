@@ -192,9 +192,9 @@ class Client(object):
         self.restartGame = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_restart', self.syncSessionConnection), self, Client)
 
         self.updateKeepAlive = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_update_keep_alive',self.syncSessionConnection), self, Client)
-        #SEND name only
-        #TODO On return do self.asynConnection.close() and self.syncSessionConnection.close()
+
         self.leave = MethodType(self.createFunction(self.sessionIdentifier,'rpc_leave',self.syncSessionConnection),self,Client)
+        self.disconnect = MethodType(self.createFunction(self.sessionIdentifier,'rpc_disconnect',self.syncSessionConnection),self,Client)
 
     def initServerListeners(self):
         self.createSession = MethodType(self.createFunction(self.serverName, 'rpc_createSession',self.syncServerConnection,True),self, Client)
