@@ -95,6 +95,11 @@ class Session(threading.Thread):
                                                              routing_key='',
                                                              body="DISCONNECTED:%s" % playerName)
 
+                            if self.order[self.playerturn] == playerName:
+                                print "Skipping disconnected player"
+                                # Was this players turn, skip him
+                                self.notifyNextPlayer()
+
                             if self.hostName == playerName:
                                 if len(self.players) > 0:
                                     # Set a new host
@@ -156,6 +161,12 @@ class Session(threading.Thread):
                                          routing_key='',
                                          body="DISCONNECTED:%s" % request)
 
+        if self.order[self.playerturn] == request:
+            print "Skipping disconnected player"
+            #Was this players turn, skip him
+            self.notifyNextPlayer()
+
+
         if self.hostName == request:
             if len(self.players) > 0:
                 # Set a new host
@@ -199,6 +210,12 @@ class Session(threading.Thread):
                                          routing_key='',
                                          body="LEFT:"+request)
 
+        if self.order[self.playerturn] == request:
+            print "Skipping left player"
+            #Was this players turn, skip him
+            self.notifyNextPlayer()
+
+
         if self.hostName == request:
             if len(self.players) > 0:
                 #Set a new host
@@ -223,6 +240,12 @@ class Session(threading.Thread):
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',
                                          body="LEFT:"+request)
+
+        if self.order[self.playerturn] == request:
+            print "Skipping left player"
+            #Was this players turn, skip him
+            self.notifyNextPlayer()
+
 
         if self.hostName == request:
             if len(self.players) > 0:
