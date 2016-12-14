@@ -89,7 +89,7 @@ class SessionSelectScreen:
             sessionRect = self.windowSurface.blit(nameText, nameTextRect)
             otherRect = self.windowSurface.blit(otherText, otherTextRect)
 
-            joinFailError = self.mediumFont.render(self.joinFailText, True, COLOR_WHITE,
+            joinFailError = self.smallFont.render(self.joinFailText, True, COLOR_WHITE,
                                                    COLOR_BLACK)
             joinFailErrorRect = joinFailError.get_rect()
             joinFailErrorRect.left = 50
@@ -126,7 +126,15 @@ class SessionSelectScreen:
 
                     else:
                         print("Unable to join the session")
-                        self.joinFailText = "Unable to join, game already in progress"
+                        error = response.split(":")[2]
+                        if error == "INVALIDSESSION":
+                            self.joinFailText = "Tried to join invalid session."
+                        elif error == "NAMEINUSE":
+                            self.joinFailText = "Your name is already in use and active in that session."
+                        elif error == "GAMESTARTED":
+                            self.joinFailText = "Unable to join, game already started."
+                        else:
+                            self.joinFailText = "Unknown error occured when trying to join session."
 
 
 

@@ -41,7 +41,7 @@ class Server():
         session = Session(self.name, sessionName, username, int(boardSize))
         self.sessions[sessionName] = session
 
-        session.addPlayer(username)
+        session.tryAddPlayer(username)
         response = "CREATED:" + sessionName
 
         # First argument is sent to only the sender. The second one is broadcasted globally.
@@ -58,10 +58,14 @@ class Server():
         except KeyError:
             # First argument is sent to only the sender. The second one is broadcasted globally.
             print("Invalid sessionName provided by %s" % username)
-            return "FAIL:"+sessionName, ""
+            return "FAIL:"+sessionName +":INVALIDSESSION", ""
 
         if session.state == "INIT":
-            session.addPlayer(username)
+            success = session.tryAddPlayer(username)
+            if not success:
+                #Name already in use
+                return "FAIL:"+ sessionName +":NAMEINUSE", ""
+
             #Doesn't matter if rejoining. User can re-place his ships
             #TODO: Handle case where user placed ships, game is still in INIT but user rejoined
             print("Allowing %s to join." % username)
@@ -76,7 +80,7 @@ class Server():
 
             return message, ""
         else:
-            if username in session.players:
+            if username in session.players and session.players[username].connected == False:
                 print("Allowing %s to rejoin." % username)
 
                 message = "WELCOMEBACK:"+sessionName + ":" + str(session.hostName == username) + ":"
@@ -89,8 +93,11 @@ class Server():
 
                 return message, ""
             else:
-                print("Rejecting %s joining. Game already started." % username)
-                return "FAIL:"+sessionName, ""
+                print "Rejecting %s from rejoining. Already connected without having timed out."
+                return "FAIL:" + sessionName + ":NAMEINUSE", ""
+
+            print("Rejecting %s joining. Game already started." % username)
+            return "FAIL:"+sessionName + ":GAMESTARTED", ""
 
     #Called when user is asking for available rooms on the server
     def getSessionsCallback(self, request):

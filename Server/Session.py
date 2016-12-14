@@ -32,26 +32,30 @@ class Session(threading.Thread):
 
         self.initChannels()
 
-    def addPlayer(self, name):
+    def tryAddPlayer(self, name):
         with self.lock:
-            #TODO: Comment back in once we have proper disconnect handling
-            #if name in self.players:
-            #    return False
-            #else:
+            if name in self.players and self.players[name].connected == True:
+                return False
+            else:
+                if name in self.players and self.players[name].connected == False:
+                    #Rejoining player
+                    self.updateChannel.basic_publish(exchange=self.prefix + 'updates', routing_key='',
+                                                 body="REJOININGPLAYER:%s"%name)
+                else:
+                    #New player
+                    self.updateChannel.basic_publish(exchange=self.prefix + 'updates', routing_key='',
+                                                     body="NEWPLAYER:%s" % name)
+
                 board = [[0 for i in range(self.boardWidth)] for j in range(self.boardWidth)]
                 isHost = name == self.hostName
                 keepAliveTime = time.time()
 
-                player = Player()
 
+                player = Player()
                 player.init(name, isHost, False, keepAliveTime, board, self.shipCount)
                 self.players[name] = player
                 self.order.append(name)
 
-                #TODO: This should be sent as the argument in server.py
-                self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
-                                                 routing_key='',
-                                                 body="NEWPLAYER:%s"%name)
                 return True
 
 
@@ -303,6 +307,8 @@ class Session(threading.Thread):
         return response, message
 
     def notifyNextPlayer(self):
+        if len(self.order) == 0:
+            return
         message = ":".join(["NEXT",self.order[self.playerturn]])
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',

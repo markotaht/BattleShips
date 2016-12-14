@@ -35,10 +35,10 @@ class GameScreen:
         if self.isGameStarted == False:
             turnStr = "Waiting for players..."
             #Show winner if there is one
-            winnerText = self.mediumFont.render(self.winnerStr, True, COLOR_BLACK)
+            winnerText = self.smallFont.render(self.winnerStr, True, COLOR_BLACK)
             winnerTextRect = winnerText.get_rect()
             winnerTextRect.left = 20
-            winnerTextRect.bottom = 380
+            winnerTextRect.bottom = 430
             self.windowSurface.blit(winnerText, winnerTextRect)
         else:
             if self.turnPlayer == self.client.username:
@@ -47,10 +47,10 @@ class GameScreen:
                 turnStr = self.turnPlayer + "'s turn"
 
         #Show this when you are dead
-        deadText = self.mediumFont.render(self.deadStr, True, COLOR_BLACK)
+        deadText = self.smallFont.render(self.deadStr, True, COLOR_BLACK)
         deadTextRect = deadText.get_rect()
         deadTextRect.left = 20
-        deadTextRect.bottom = 350
+        deadTextRect.bottom = 400
         self.windowSurface.blit(deadText, deadTextRect)
 
         turnText = self.mediumFont.render(turnStr, True, COLOR_BLACK)
@@ -103,11 +103,14 @@ class GameScreen:
                     #Mark disconnected players grey
                     color = COLOR_DARK_GREY
             else:
-                if self.players[player].isReady:
-                    color = COLOR_GREEN
+                if self.players[player].connected:
+                    if self.players[player].isReady:
+                        color = COLOR_GREEN
+                    else:
+                        color = COLOR_RED
+                        everyoneReady = False
                 else:
-                    color = COLOR_RED
-                    everyoneReady = False
+                    color = COLOR_DARK_GREY
 
             playerText = self.smallFont.render(player, True, color)
             playerTextRect = playerText.get_rect()
