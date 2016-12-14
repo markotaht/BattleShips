@@ -110,6 +110,9 @@ class Session(threading.Thread):
             self.keepAliveListener = MethodType(createRPCListener(self, 'rpc_update_keep_alive', self.updateKeepAlive), self, Session)
             self.keepAliveListener = threading.Thread(target = self.keepAliveListener)
 
+            self.disconnectListener = MethodType(createRPCListener(self,'rpc_disconnect',self.disconnectCallback,True),self,Session)
+            self.disconnect = threading.Thread(target=self.disconnectListener)
+
             self.runThread = threading.Thread(target = self.run)
 
             self.kickPlayer.start()
@@ -118,10 +121,20 @@ class Session(threading.Thread):
             self.finishedPlacing.start()
             self.keepAliveListener.start()
             self.runThread.start()
+            self.disconnect.start()
 
+    def disconnectCallback(self,request):
+        print("[.] player %s disconnected" % request)
+        self.order.remove(request)
+        self.players.pop(request,None)
+
+        return "OK","DISCONNECT:"+request
+
+        return
     def kickPlayerCallback(self, request):
         print(" [.] kickPlayer(%s)" % request)
-
+        self.order.remove(request)
+        self.players.pop(request,None)
         #TODO: Kick player
         return "", ""
 

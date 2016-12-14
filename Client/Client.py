@@ -112,7 +112,8 @@ class Client(object):
         self.bomb = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_bomb'), self, Client)
         self.startGame = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_start'), self, Client)
         self.updateKeepAlive = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_update_keep_alive'), self, Client)
-
+        #SEND name only
+        self.disconnect = MethodType(self.createFunction(self.sessionIdentifier,'rpc_disconnect'),self,Client)
 
     def initServerListeners(self):
         self.createSession = MethodType(self.createFunction(self.serverName, 'rpc_createSession',True),self, Client)
@@ -192,8 +193,10 @@ class Client(object):
                 self.screen.killPlayer(parts[1])
                 if parts[1] == self.username:
                     self.screen.deadStr = "Killed by %s"%parts[2]
-
-
+            #Player left because he/she wated to
+            elif parts[0] == "DISCONNECT":
+                #TODO Review player leaving
+                self.screen.players.pop(parts[1],None)
             else:
                 print "not known message "+body
 
