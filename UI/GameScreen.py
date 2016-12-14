@@ -343,7 +343,6 @@ class GameScreen:
 
     def killPlayer(self, player):
         self.players[player].isAlive = False
-        print "killed %s"%player
 
     def setWinnerStr(self, winner):
         if winner == self.client.username:

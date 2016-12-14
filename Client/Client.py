@@ -161,7 +161,6 @@ class Client(object):
                         self.screen.players[self.username].board.setTileByIndex(int(parts[3]), int(parts[4]), 2)
                 if parts[1] != "SUNK" and parts[2] != self.username:
                     return
-                print body
             elif parts[0] == "SUNK":
                 # if any ships were sinked it should be visible for everyone at moment of sinking
                 self.screen.markAsSunk(parts[1], parts[5])
@@ -191,14 +190,13 @@ class Client(object):
                 self.screen.isGameStarted = False
                 self.screen.setWinnerStr(parts[1])
             elif parts[0] == "DEAD":
-                print "%s is dead"%parts[1]
                 self.screen.killPlayer(parts[1])
                 if parts[1] == self.username:
                     self.screen.deadStr = "Killed by %s"%parts[2]
 
 
             else:
-                print "not known message %s", body
+                print "not known message "+body
 
         channel.basic_consume(callback,
                               queue=queue_name,

@@ -130,6 +130,7 @@ class Session(threading.Thread):
             board = self.players[name].board
 
             for ship in ships:
+                print "ship", ship
                 ship = ship.split(";")
                 tileX = int(ship[0])
                 tileY = int(ship[1])
@@ -138,6 +139,7 @@ class Session(threading.Thread):
 
                 if vertical == False:
                     if tileX > self.boardWidth - shipSize:
+                        print "reject 1"
                         return False
 
                     # Check if the area around the ship is free
@@ -147,6 +149,7 @@ class Session(threading.Thread):
                                 # Out of range, can skip these tiles
                                 continue
                             if board[x][y] != TILE_EMPTY:
+                                print "reject 2"
                                 return False
 
                     # If this is reached, can place the ship
@@ -155,6 +158,7 @@ class Session(threading.Thread):
                 else:
                     if tileY > self.boardWidth - shipSize:
                         # The ship would be out of bounds
+                        print "reject 3"
                         return False
 
                     # Check if the area around the ship is free
@@ -164,6 +168,7 @@ class Session(threading.Thread):
                                 # Out of range, can skip these tiles
                                 continue
                             if board[x][y] != TILE_EMPTY:
+                                print "reject 4"
                                 return False
 
                     # If this is reached, can place the ship
