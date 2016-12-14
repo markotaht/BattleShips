@@ -27,16 +27,26 @@ class Client(object):
         self.state = "INIT"
         self.lastkeepAlive  = 0
 
+        self.syncServerConnection = None
+        self.syncSessionConnection = None
+        self.asyncConnection = None
+        self.asyncServerListConnection = None
+
         self.serverlist("localhost")
         #Start the main loop
         self.run();
 
 
     def close(self):
-        self.asyncServerListConnection.close()
-        self.asyncConnection.close()
-        self.syncServerConnection.close()
-        self.syncSessionConnection.close()
+        if self.syncServerConnection:
+            self.syncServerConnection.close()
+        if self.syncSessionConnection:
+            self.syncSessionConnection.close()
+        if self.asyncServerListConnection:
+            self.asyncServerListConnection.close()
+        if self.asyncConnection:
+            self.asyncConnection.close()
+        print "Closed"
 
     def serverlist(self, mqAddress):
         #TODO Siit panna serverite nimed kuhugi. Timestampiga tuvastada millal viimane tuli(tsukkel hetkel 1 s) ja kui ei tule nt 5s jooksul uut, siis on offline
@@ -47,15 +57,15 @@ class Client(object):
         self.asyncServerListlistener.start()
 
     def listenforserverlist(self, connection):
-        channel = connection.channel()
+        self.serverListChannel = connection.channel()
 
-        channel.exchange_declare('serverlist',
+        self.serverListChannel.exchange_declare('serverlist',
                                  type='fanout')
 
-        result = channel.queue_declare(exclusive=True)
+        result = self.serverListChannel.queue_declare(exclusive=True)
         queue_name = result.method.queue
 
-        channel.queue_bind(exchange='serverlist',
+        self.serverListChannel.queue_bind(exchange='serverlist',
                            queue=queue_name)
 
         print(' [*] Waiting for ServerList. To exit press CTRL+C')
@@ -63,12 +73,11 @@ class Client(object):
         def callback(ch, method, properties, body):
             print "Servername:" + body
 
-        channel.basic_consume(callback,
+        self.serverListChannel.basic_consume(callback,
                               queue=queue_name,
                               no_ack=True)
 
-        channel.start_consuming()
-        print "Closing"
+        self.serverListChannel.start_consuming()
 
     def run(self):
         clock = pygame.time.Clock()
@@ -80,6 +89,7 @@ class Client(object):
             events = pygame.event.get()
             for event in events:
                 if event.type == QUIT:
+                    #TODO Sureta siin kõik välja.... dunno kuidas aint...
                     self.close()
                     sys.exit()
             # Clear the screen
