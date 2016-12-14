@@ -323,6 +323,8 @@ class Session(threading.Thread):
     def notifyNextPlayer(self):
         if len(self.order) == 0:
             return
+        elif len(self.order) == 1 and self.playerturn == 1:
+            self.playerturn = 0
         message = ":".join(["NEXT",self.order[self.playerturn]])
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',
