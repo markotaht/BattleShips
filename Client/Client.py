@@ -115,7 +115,7 @@ class Client(object):
         self.placeShip = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_place_ship',self.syncSessionConnection), self, Client)
         self.bomb = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_bomb',self.syncSessionConnection), self, Client)
         self.startGame = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_start',self.syncSessionConnection), self, Client)
-        self.updateKeepAlive = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_update_keep_alive'), self, Client)
+        self.updateKeepAlive = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_update_keep_alive',self.syncSessionConnection), self, Client)
         #SEND name only
         #TODO On return do self.asynConnection.close() and self.syncSessionConnection.close()
         self.disconnect = MethodType(self.createFunction(self.sessionIdentifier,'rpc_disconnect',self.syncSessionConnection),self,Client)
