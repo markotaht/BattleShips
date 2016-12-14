@@ -7,4 +7,4 @@ class Player:
         #For checking if this player has been shot by the local player during a particular turn
         self.hasBeenShot = False
         #for checking win and loss condition
-        self.isAlife = True
+        self.isAlive = True

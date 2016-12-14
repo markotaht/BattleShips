@@ -72,9 +72,6 @@ class SetupShipsScreen:
 
     def update(self, events):
 
-        #if escapePressed(events):
-            #TODO: Handle
-
         # leave button
         leaveText = self.smallFont.render("Leave session", True, COLOR_WHITE, COLOR_BLACK)
         leaveTextRect = leaveText.get_rect()
@@ -83,15 +80,6 @@ class SetupShipsScreen:
         leaveRect = self.windowSurface.blit(leaveText, leaveTextRect)
         if clickedOnRect(leaveRect, events):
             self.client.leave(self.client.username)
-
-        #disconnect button
-        disconnectText = self.mediumFont.render("Disconnect", True, COLOR_WHITE, COLOR_BLACK)
-        disconnectTextRect = disconnectText.get_rect()
-        disconnectTextRect.left = 300
-        disconnectTextRect.top = 10
-        self.windowSurface.blit(disconnectText, disconnectTextRect)
-        if clickedOnRect(disconnectTextRect, events):
-            print("Disconnect placeholder...")
 
         #SETUP SHIPS TEXT
         setupShipsText = self.mediumFont.render("Setup your ships:", True, COLOR_BLACK)

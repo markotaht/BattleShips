@@ -79,8 +79,7 @@ class SessionSelectScreen:
 
             #Contains the other 3 fields
             otherText = self.smallFont.render(str(boardSize)
-                        + "x" + str(boardSize) + "        " + str(playerCount) + "         " + state
-                        + " players", True, COLOR_BLACK)
+                        + "x" + str(boardSize) + "        " + str(playerCount) + "         " + state, True, COLOR_BLACK)
             otherTextRect = otherText.get_rect()
             otherTextRect.right = 460
             otherTextRect.centery = y

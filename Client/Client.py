@@ -89,7 +89,7 @@ class Client(object):
             events = pygame.event.get()
             for event in events:
                 if event.type == QUIT:
-                    #TODO Sureta siin kõik välja.... dunno kuidas aint...
+                    #TODO Kill everything
                     self.close()
                     sys.exit()
             # Clear the screen
@@ -263,7 +263,6 @@ class Client(object):
 
             elif parts[0] == "OVER":
                 print "Game over, %s won"%parts[1]
-                self.screen.isGameStarted = True
                 self.screen.isGameOver = True
                 self.screen.setWinnerStr(parts[1])
             elif parts[0] == "DEAD":
@@ -295,8 +294,10 @@ class Client(object):
 
     def stoplisteningToSession(self):
         print "Stopping listening to session."
-        self.asynConnection.close()
-        self.syncSessionConnection.close()
+        if self.asyncConnection:
+            self.asyncConnection.close()
+        if self.syncSessionConnection:
+            self.syncSessionConnection.close()
 
     #Stuff for RPC/MQ
     def on_response(self, ch, method, props, body):

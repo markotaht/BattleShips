@@ -7,7 +7,7 @@ class Player:
         self.board = board
         self.connected = True
         #for checking win and loss condition
-        self.isAlife = True
+        self.isAlive = True
         self.shipsRemaining = shipCount
 
         #TODO: Manage this with done moves so rejoining players can be given their data

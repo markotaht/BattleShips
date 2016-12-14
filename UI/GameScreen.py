@@ -35,17 +35,20 @@ class GameScreen:
 
         if self.isGameStarted == False:
             turnStr = "Waiting for players..."
-            #Show winner if there is one
-            winnerText = self.smallFont.render(self.winnerStr, True, COLOR_BLACK)
-            winnerTextRect = winnerText.get_rect()
-            winnerTextRect.left = 20
-            winnerTextRect.bottom = 430
-            self.windowSurface.blit(winnerText, winnerTextRect)
         else:
             if self.turnPlayer == self.client.username:
                 turnStr = "Your turn"
             else:
                 turnStr = self.turnPlayer + "'s turn"
+
+        if self.isGameOver == True:
+            turnStr = "Good game!"
+            # Show winner if there is one
+            winnerText = self.smallFont.render(self.winnerStr, True, COLOR_BLACK)
+            winnerTextRect = winnerText.get_rect()
+            winnerTextRect.left = 20
+            winnerTextRect.bottom = 430
+            self.windowSurface.blit(winnerText, winnerTextRect)
 
         #Show this when you are dead
         deadText = self.smallFont.render(self.deadStr, True, COLOR_BLACK)
@@ -97,7 +100,13 @@ class GameScreen:
                     x += 65
                     self.windowSurface.blit(shootText, shootTextRect)
 
-
+            if not self.players[player].isAlive:
+                deadText = self.smallFont.render("[DEAD]", True, COLOR_BLACK)
+                deadTextRect = deadText.get_rect()
+                deadTextRect.left = x
+                deadTextRect.top = y
+                x += 65
+                self.windowSurface.blit(deadText, deadTextRect)
 
             if self.isGameStarted:
                 if self.players[player].connected:
@@ -136,12 +145,11 @@ class GameScreen:
                     self.isGameStarted = True
                     self.nextBoard()
 
-        #Add self.isGameOver and self.isHost when done testing restarting here
-        if self.isHost:
+        if self.isHost and self.isGameOver:
             restartGameText = self.mediumFont.render("Restart game", True, COLOR_WHITE, COLOR_BLACK)
             restartGameTextRect = restartGameText.get_rect()
             restartGameTextRect.left = 20
-            restartGameTextRect.bottom = 440
+            restartGameTextRect.bottom = 470
             restartGameRect = self.windowSurface.blit(restartGameText, restartGameTextRect)
             if clickedOnRect(restartGameRect, events):
                 print("Restarting the game...")
@@ -210,7 +218,7 @@ class GameScreen:
         if self.isGameStarted:
             if self.turnPlayer == self.client.username:
                 if self.activePlayer != self.client.username:
-                    if not self.players[self.activePlayer].hasBeenShot:
+                    if not self.players[self.activePlayer].hasBeenShot and self.players[self.activePlayer].isAlive:
                         if self.activeBoard.getTileByIndex(tileX, tileY) == 0:
                             request = ":".join([str(tileX),str(tileY), self.activePlayer, self.client.username])
                             response = self.client.bomb(request)
@@ -225,7 +233,7 @@ class GameScreen:
                         else:
                             print "Tried to click on a tile that has already been hit"
                     else:
-                        print "Tried to shoot a player that the player has already shot"
+                        print "Tried to shoot a player that the player has beenalready shot otr is dead"
                 else:
                     print "click on your board "+ str(tileX) + " " + str(tileY)
 
