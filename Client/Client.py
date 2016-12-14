@@ -156,6 +156,8 @@ class Client(object):
         self.placeShip = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_place_ship',self.syncSessionConnection), self, Client)
         self.bomb = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_bomb',self.syncSessionConnection), self, Client)
         self.startGame = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_start',self.syncSessionConnection), self, Client)
+        self.restartGame = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_restart', self.syncSessionConnection), self, Client)
+
         self.updateKeepAlive = MethodType(self.createFunction(self.sessionIdentifier, 'rpc_update_keep_alive',self.syncSessionConnection), self, Client)
         #SEND name only
         #TODO On return do self.asynConnection.close() and self.syncSessionConnection.close()
@@ -228,20 +230,23 @@ class Client(object):
             elif parts[0] == "REJOININGPLAYER":
                 print "%s rejoined the game" % parts[1]
                 self.screen.players[parts[1]].connected = True
+            elif parts[0] == "RESTARTING":
+                print "Restarting the session..."
             elif parts[0] == "DISCONNECTED":
                 print "Marking %s as disconnected" % parts[1]
                 self.screen.players[parts[1]].connected = False
             elif parts[0] == "OVER":
                 print "Game over, %s won"%parts[1]
-                self.screen.isGameStarted = False
+                self.screen.isGameStarted = True
+                self.screen.isGameOver = True
                 self.screen.setWinnerStr(parts[1])
             elif parts[0] == "DEAD":
                 self.screen.killPlayer(parts[1])
                 if parts[1] == self.username:
                     self.screen.deadStr = "Killed by %s"%parts[2]
             #Player left because he/she wated to
-            elif parts[0] == "DISCONNECT":
-                #TODO Review player leaving
+            elif parts[0] == "LEFT":
+                #TODO Review player leaving on his own will
                 self.screen.players.pop(parts[1],None)
             else:
                 print "not known message "+body

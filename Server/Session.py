@@ -37,13 +37,7 @@ class Session(threading.Thread):
             if name in self.players and self.players[name].connected == True:
                 return False
             else:
-                if name in self.players and self.players[name].connected == False:
-                    #Rejoining player
-                    self.updateChannel.basic_publish(exchange=self.prefix + 'updates', routing_key='',
-                                                 body="REJOININGPLAYER:%s"%name)
-                else:
-                    #New player
-                    self.updateChannel.basic_publish(exchange=self.prefix + 'updates', routing_key='',
+                self.updateChannel.basic_publish(exchange=self.prefix + 'updates', routing_key='',
                                                      body="NEWPLAYER:%s" % name)
 
                 board = [[0 for i in range(self.boardWidth)] for j in range(self.boardWidth)]
@@ -97,46 +91,54 @@ class Session(threading.Thread):
 
             self.kickPlayerListener = MethodType(createRPCListener(self, 'rpc_kick_player', self.kickPlayerCallback), self, Session)
             self.kickPlayer = threading.Thread(target=self.kickPlayerListener)
+            self.kickPlayer.start()
 
             self.bombShipListener = MethodType(createRPCListener(self,'rpc_bomb',self.bombShipCallback), self, Session)
             self.bombship = threading.Thread(target=self.bombShipListener)
+            self.bombship.start()
 
             self.gameStartListener = MethodType(createRPCListener(self,'rpc_start',self.gameStartCallback), self, Session)
             self.gamestart = threading.Thread(target=self.gameStartListener)
+            self.gamestart.start()
+
+            self.gameRestartListener = MethodType(createRPCListener(self, 'rpc_restart', self.gameRestartCallback), self, Session)
+            self.gameRestart = threading.Thread(target=self.gameRestartListener)
+            self.gameRestart.start()
 
             self.finishedPlacingListener = MethodType(createRPCListener(self,'rpc_finished_placing',self.finishedPlacingCallback, True), self, Session)
             self.finishedPlacing = threading.Thread(target=self.finishedPlacingListener)
+            self.finishedPlacing.start()
 
             self.keepAliveListener = MethodType(createRPCListener(self, 'rpc_update_keep_alive', self.updateKeepAlive), self, Session)
             self.keepAliveListener = threading.Thread(target = self.keepAliveListener)
+            self.keepAliveListener.start()
 
             self.disconnectListener = MethodType(createRPCListener(self,'rpc_disconnect',self.disconnectCallback,True),self,Session)
             self.disconnect = threading.Thread(target=self.disconnectListener)
+            self.disconnect.start()
 
             self.runThread = threading.Thread(target = self.run)
-
-            self.kickPlayer.start()
-            self.bombship.start()
-            self.gamestart.start()
-            self.finishedPlacing.start()
-            self.keepAliveListener.start()
             self.runThread.start()
-            self.disconnect.start()
+
+
+    def gameRestartCallback(self, request):
+        print "Should restart game"
+
+        return "OK", "RESTARTING:" + self.name
 
     def disconnectCallback(self,request):
         print("[.] player %s disconnected" % request)
         self.order.remove(request)
         self.players.pop(request,None)
 
-        return "OK","DISCONNECT:"+request
+        return "OK","LEFT:"+request
 
         return
     def kickPlayerCallback(self, request):
         print(" [.] kickPlayer(%s)" % request)
         self.order.remove(request)
         self.players.pop(request,None)
-        #TODO: Kick player
-        return "", ""
+        return "OK", "LEFT:"+request
 
 
     def finishedPlacingCallback(self,request):
@@ -218,120 +220,35 @@ class Session(threading.Thread):
             self.players[attacker].otherBoards[victim][x][y] = TILE_MISS
             return "MISS"
 
-    def checkSunk(self,x,y,player):
+    def checkSunk(self, x, y, victim):
         #TODO kui server hakkab ka misse hoidma siis peab seda t2iendama
-        tmpBoard = self.players[player].board
+        victimBoard = self.players[victim].board
 
         #check if ship on x+
         for i in range(x+1, self.boardWidth):
-            if tmpBoard[i][y] == 1:
+            if victimBoard[i][y] == TILE_SHIP:
                 return False #Return false if we find ship
-            elif tmpBoard[i][y] == 0 or tmpBoard[i][y] == 2:
+            elif victimBoard[i][y] == TILE_EMPTY:
                 break #dont continue if nothing there
 
         for i in range(x-1, -1, -1):
-            if tmpBoard[i][y] == 1:
+            if victimBoard[i][y] == TILE_SHIP:
                 return False
-            elif tmpBoard[i][y] == 0 or tmpBoard[i][y] == 2:
+            elif victimBoard[i][y] == TILE_EMPTY:
                 break
 
 
         for i in range(y+1, self.boardWidth):
-            if tmpBoard[x][i] == 1:
+            if victimBoard[x][i] == TILE_SHIP:
                 return False
-            elif tmpBoard[x][i] == 0 or tmpBoard[i][y] == 2:
+            elif victimBoard[x][i] == TILE_EMPTY:
                 break
 
         for i in range(y-1, -1, -1):
-            if tmpBoard[x][i] == 1:
+            if victimBoard[x][i] == TILE_SHIP:
                 return False
-            elif tmpBoard[x][i] == 0 or tmpBoard[i][y] == 2:
+            elif victimBoard[x][i] == TILE_EMPTY:
                 break
-
-        #TODO vaja mingit lisa loogikat et koikidele panna need tapid laeva umber
-        for i in range(x, self.boardWidth):
-            if tmpBoard[i][y] == 3:
-                tmpBoard[i - 1][y+1] =2
-                tmpBoard[i - 1][y-1] = 2
-                tmpBoard[i + 1][y+1] = 2
-                tmpBoard[i + 1][y-1] = 2
-
-                if tmpBoard[i][y-1] != 3:
-                    tmpBoard[i][y-1] = 3
-
-                if tmpBoard[i][y + 1] != 3:
-                    tmpBoard[i][y+1] = 3
-
-                if tmpBoard[i-1][y] != 3:
-                    tmpBoard[i][y] = 3
-
-                if tmpBoard[i+1][y] != 3:
-                    tmpBoard[i][y] = 3
-            elif tmpBoard[i][y] == 0 or tmpBoard[i][y] == 2:
-                break #dont continue if nothing there
-
-            for i in range(x - 1, -1, -1):
-                if tmpBoard[i][y] == 3:
-                    tmpBoard[i - 1][y + 1] = 2
-                    tmpBoard[i - 1][y - 1] = 2
-                    tmpBoard[i + 1][y + 1] = 2
-                    tmpBoard[i + 1][y - 1] = 2
-
-                    if tmpBoard[i][y - 1] != 3:
-                        tmpBoard[i][y - 1] = 3
-
-                    if tmpBoard[i][y + 1] != 3:
-                        tmpBoard[i][y + 1] = 3
-
-                    if tmpBoard[i - 1][y] != 3:
-                        tmpBoard[i][y] = 3
-
-                    if tmpBoard[i + 1][y] != 3:
-                        tmpBoard[i][y] = 3
-                elif tmpBoard[i][y] == 0 or tmpBoard[i][y] == 2:
-                    break
-
-            for i in range(y + 1, self.boardWidth):
-                if tmpBoard[x][i] == 3:
-                    tmpBoard[x - 1][i + 1] = 2
-                    tmpBoard[x - 1][i - 1] = 2
-                    tmpBoard[x + 1][i + 1] = 2
-                    tmpBoard[x + 1][i - 1] = 2
-
-                    if tmpBoard[x][i - 1] != 3:
-                        tmpBoard[x][i - 1] = 3
-
-                    if tmpBoard[x][i + 1] != 3:
-                        tmpBoard[x][i + 1] = 3
-
-                    if tmpBoard[x - 1][i] != 3:
-                        tmpBoard[x][i] = 3
-
-                    if tmpBoard[x + 1][i] != 3:
-                        tmpBoard[x][i] = 3
-                elif tmpBoard[x][i] == 0 or tmpBoard[i][y] == 2:
-                    break
-
-            for i in range(y - 1, -1, -1):
-                if tmpBoard[x][i] == 3:
-                    tmpBoard[x - 1][i + 1] = 2
-                    tmpBoard[x - 1][i - 1] = 2
-                    tmpBoard[x + 1][i + 1] = 2
-                    tmpBoard[x + 1][i - 1] = 2
-
-                    if tmpBoard[x][i - 1] != 3:
-                        tmpBoard[x][i - 1] = 3
-
-                    if tmpBoard[x][i + 1] != 3:
-                        tmpBoard[x][i + 1] = 3
-
-                    if tmpBoard[x - 1][i] != 3:
-                        tmpBoard[x][i] = 3
-
-                    if tmpBoard[x + 1][i] != 3:
-                        tmpBoard[x][i] = 3
-                elif tmpBoard[x][i] == 0 or tmpBoard[i][y] == 2:
-                    break
 
         return True
 
@@ -381,7 +298,6 @@ class Session(threading.Thread):
         if response == "MISS":
             self.shots -= 1
 
-        #TODO teha paremaks ja lisada juurde laeva edastamine koigile
         if response == "HIT" and self.checkSunk(int(x),int(y),victim):
             hitcoords = self.getSunkDetails(int(x),int(y),victim)
             #pack for sending into x1;y1, x2;y2...
@@ -391,6 +307,7 @@ class Session(threading.Thread):
             if self.players[victim].shipsRemaining != 1:
                 self.players[victim].shipsRemaining -= 1
             else:
+                self.players[victim].shipsRemaining = 0
                 self.killPlayer(victim, attacker)
                 self.shots -= 1
 
@@ -416,13 +333,16 @@ class Session(threading.Thread):
     def notifyNextPlayer(self):
         if len(self.order) == 0:
             return
+        #TODO: Host gets 2 turns at start
         elif len(self.order) == 1 and self.playerturn == 1:
             self.playerturn = 0
+
+        self.playerturn = (self.playerturn+1)%len(self.order)
+
         message = ":".join(["NEXT",self.order[self.playerturn]])
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',
                                          body=message)
-        self.playerturn = (self.playerturn+1)%len(self.order)
         self.shots = len(self.order)-1
         print "%s's turn"%self.order[self.playerturn]
 
