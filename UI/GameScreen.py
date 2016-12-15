@@ -268,6 +268,13 @@ class GameScreen:
             y = int(tmp[1])
             tmpBoard.setTileByIndex(x, y, 2)
 
+    def spectatorUpdate(self, victim, boardData):
+        board = self.players[victim].board
+        for i in range(0, len(boardData)):
+            x = i / self.boardWidth
+            y = i % self.boardWidth
+            board.setTileByIndex(x, y, int(boardData[i]))
+
     def addPlayer(self, playerName):
         #Create a new player with a board
         board = Board()

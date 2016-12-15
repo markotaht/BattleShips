@@ -306,6 +306,11 @@ class Client(object):
                     self.screen.joinFailText = "You left/You were kicked from the session."
                     self.stoplisteningToSession()
 
+            #send full board to spectators
+            elif parts[0] == "SPECTATOR":
+                if self.screen.deadStr != "":
+                    print "%s attacked"%parts[1]
+                    self.screen.spectatorUpdate(parts[1], parts[2])
             else:
                 print "not known message "+body
 

@@ -371,6 +371,15 @@ class Session(threading.Thread):
 
         return True
 
+    def updateOtherBoards(self,shiphit, shipmiss, victim):
+        for player in self.players:
+            if player != victim:
+                tmpBoard = self.players[player].otherBoards[victim]
+                for i in shiphit:
+                    tmpBoard[i[0]][i[1]] = TILE_SHIP_HIT
+                for i in shipmiss:
+                    tmpBoard[i[0]][i[1]] = TILE_MISS
+
     def getSunkDetails(self,x,y,player):
         tmpBoard = self.players[player].board
         shiphit = []#tuples of coords (x,y),board = 3
@@ -542,7 +551,6 @@ class Session(threading.Thread):
                                 tmpBoard[x - 1][i] = 2
                                 shipmiss.append((x-1, i))
                         break
-            print shipmiss
             shipmiss2 = []
             #remove negative values
             for i in shipmiss:
@@ -551,24 +559,24 @@ class Session(threading.Thread):
                     #shame on you
                 else:
                     shipmiss2.append(i)
-        return shiphit, shipmiss2
+        return list(set(shiphit)), list(set(shipmiss2))
 
     def bombShipCallback(self,request):
-        print request
         x, y, victim, attacker = request.split(":")
 
         print(" [.] bomb(%s,%s, %s, %s)" %(x,y,victim, attacker))
         response = self.checkHit(int(x),int(y),victim, attacker)
-        print response
 
         if response == "MISS":
             self.shots -= 1
 
         if response == "HIT" and self.checkSunk(int(x),int(y),victim):
             hitcoords, misscoords = self.getSunkDetails(int(x),int(y),victim)
+            self.updateOtherBoards(hitcoords, misscoords, victim)
             #pack for sending into x1;y1, x2;y2...
-            hitcoords = ",".join([str(a[0])+";"+str(a[1]) for a in list(set(hitcoords))])
-            misscoords = ",".join([str(a[0])+";"+str(a[1]) for a in list(set(misscoords))])
+            hitcoords = ",".join([str(a[0])+";"+str(a[1]) for a in hitcoords])
+            misscoords = ",".join([str(a[0])+";"+str(a[1]) for a in misscoords])
+            #update all boards for dc stuff
             message = ":".join(["SUNK",victim, attacker,x,y, str(hitcoords), str(misscoords)])
 
             #update player's ship count
@@ -590,6 +598,17 @@ class Session(threading.Thread):
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',
                                          body=message)
+
+        #also notify dead players
+        #send SPECTATOR:victim:boarddata
+        boardData = ""
+        for x in range(0, self.boardWidth):
+            for y in range(0, self.boardWidth):
+                boardData += str(self.players[victim].board[x][y])
+
+        self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                         routing_key='',
+                                         body="SPECTATOR:"+str(victim)+":"+boardData)
 
         print "SERVER - message:", message
         print "Shots remaining:", self.shots
