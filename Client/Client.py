@@ -19,13 +19,13 @@ class Client(object):
         self.windowSurface.fill(COLOR_WHITE)
         pygame.display.set_caption('Naval Warfare Simulator')
 
-        #Username field
+        #Username value
         self.username = "DefaultName"
 
         self.loadMainMenuScreen()
 
         self.state = "INIT"
-        self.lastkeepAlive  = 0
+        self.lastkeepAlive  = time() - 10
 
         self.connected = False;
         self.syncServerConnection = None
@@ -63,7 +63,6 @@ class Client(object):
         print "Closed"
 
     def serverlist(self, mqAddress):
-        #TODO Siit panna serverite nimed kuhugi. Timestampiga tuvastada millal viimane tuli(tsukkel hetkel 1 s) ja kui ei tule nt 5s jooksul uut, siis on offline
         self.asyncServerListConnection =  pika.BlockingConnection(pika.ConnectionParameters(
             host=mqAddress))
 
