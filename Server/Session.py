@@ -202,11 +202,6 @@ class Session(threading.Thread):
 
     def leaveCallback(self,request):
         print("[.] player %s left" % request)
-        if request in self.order:
-            self.order.remove(request)
-        if request in self.players:
-            self.players.pop(request,None)
-
         #The global argument doesnt seem to be working, so...
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',
@@ -228,15 +223,22 @@ class Session(threading.Thread):
                 #Tag session to be closed
                 self.shouldDie = True
 
+        # remove player from player list and turn list
+        # update shots also
+        if self.order.index(request) <= self.playerturn:
+            self.playerturn -= 1
+        if request in self.order:
+            self.order.remove(request)
+        if request in self.players:
+            self.players.pop(request, None)
+
+        self.shots -= 1
+
         return "OK",""
 
         return
     def kickPlayerCallback(self, request):
         print(" [.] kickPlayer(%s)" % request)
-        if request in self.order:
-            self.order.remove(request)
-        if request in self.players:
-            self.players.pop(request,None)
 
         #The global argument doesnt seem to be working, so...
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
@@ -259,8 +261,18 @@ class Session(threading.Thread):
                 # Tag session to be closed
                 self.shouldDie = True
 
-        return "OK", ""
+        # remove player from player list and turn list
+        # update shots also
+        if self.order.index(request) <= self.playerturn:
+            self.playerturn -= 1
+        if request in self.order:
+            self.order.remove(request)
+        if request in self.players:
+            self.players.pop(request, None)
 
+        self.shots -= 1
+
+        return "OK", ""
 
     def finishedPlacingCallback(self,request):
         print( "[S] finishedPlacingCallback(%s)" % request)
