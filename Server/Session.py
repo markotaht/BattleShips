@@ -520,8 +520,7 @@ class Session(threading.Thread):
 
         print "SERVER - message:", message
         print "Shots remaining:", self.shots
-        # TODO see kuidagi teisiti vb handlida
-        if self.shots == 0:
+        if self.shots <= 0:
             self.notifyNextPlayer()
 
         return response, message
@@ -529,7 +528,6 @@ class Session(threading.Thread):
     def notifyNextPlayer(self):
         if len(self.order) == 0:
             return
-        #TODO: Host gets 2 turns at start
         elif len(self.order) == 1 and self.playerturn == 1:
             self.playerturn = 0
 
