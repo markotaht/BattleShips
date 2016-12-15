@@ -73,7 +73,7 @@ class GameScreen:
             self.client.leave(self.client.username)
 
         #If player is not dead
-        if self.deadStr == "":
+        if self.deadStr == "" and not self.isGameOver:
             #disconnect button
             disconnectText = self.smallFont.render("Disconnect temporarily", True, COLOR_WHITE, COLOR_BLACK)
             disconnectTextRect = disconnectText.get_rect()
@@ -156,7 +156,7 @@ class GameScreen:
                     self.isGameStarted = True
                     self.nextBoard()
 
-        if self.isHost and self.isGameOver:
+        if self.isHost and (self.isGameOver or (self.isGameStarted and len(self.players) < 2)):
             restartGameText = self.mediumFont.render("Restart game", True, COLOR_WHITE, COLOR_BLACK)
             restartGameTextRect = restartGameText.get_rect()
             restartGameTextRect.left = 20
