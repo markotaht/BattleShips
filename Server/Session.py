@@ -202,8 +202,10 @@ class Session(threading.Thread):
 
     def leaveCallback(self,request):
         print("[.] player %s left" % request)
-        self.order.remove(request)
-        self.players.pop(request,None)
+        if request in self.order:
+            self.order.remove(request)
+        if request in self.players:
+            self.players.pop(request,None)
 
         #The global argument doesnt seem to be working, so...
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
@@ -590,4 +592,20 @@ class Session(threading.Thread):
         self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
                                          routing_key='',
                                          body="DEAD:" + player + ":" + killer)
+
+
+        #After the player has died, immediately also publish all the spectator data so the dead player can get full states
+        #send SPECTATOR:victim:boarddata
+        for otherPlayer in self.players:
+            if otherPlayer == player:
+                continue
+            boardData = ""
+            for x in range(0, self.boardWidth):
+                for y in range(0, self.boardWidth):
+                    boardData += str(self.players[otherPlayer].board[x][y])
+
+            self.updateChannel.basic_publish(exchange=self.prefix + 'updates',
+                                             routing_key='',
+                                             body="SPECTATOR:"+str(otherPlayer)+":"+boardData)
+
         self.checkWin()
